@@ -1,96 +1,101 @@
-class MidiMacros {
+import CONSTANTS from "./constants";
+
+export class MidiMacros {
 
     static targets(args) {
         const lastArg = args[args.length - 1];
         let tactor, ttoken;
         if (lastArg.tokenId) {
-            ttoken = canvas.tokens.get(lastArg.tokenId);
+            ttoken = canvas.tokens?.get(lastArg.tokenId);
             tactor = ttoken.actor
         }
-        else tactor = game.actors.get(lastArg.actorId);
+        else tactor = game.actors?.get(lastArg.actorId);
         return { actor: tactor, token: ttoken, lArgs: lastArg }
     }
     /**
-     * 
-     * @param {Object} templateData 
-     * @param {Actor5e} actor 
+     *
+     * @param {Object} templateData
+     * @param {Actor5e} actor
      */
     static templateCreation(templateData, actor) {
-        let doc = new CONFIG.MeasuredTemplate.documentClass(templateData, { parent: canvas.scene })
-        let template = new game.dnd5e.canvas.AbilityTemplate(doc)
+        const doc = new CONFIG.MeasuredTemplate.documentClass(templateData, { parent: <Scene>canvas.scene });
+        //@ts-ignore
+        const template = new game.dnd5e.canvas.AbilityTemplate(doc)
         template.actorSheet = actor.sheet;
         template.drawPreview()
     }
 
     /**
-     * 
-     * @param {String} flagName 
-     * @param {Actor5e} actor 
+     *
+     * @param {String} flagName
+     * @param {Actor5e} actor
      */
     static async deleteTemplates(flagName, actor) {
-        let removeTemplates = canvas.templates.placeables.filter(i => i.data.flags["midi-srd"]?.[flagName]?.ActorId === actor.id);
-        let templateArray = removeTemplates.map(function (w) { return w.id })
-        if (removeTemplates) await canvas.scene.deleteEmbeddedDocuments("MeasuredTemplate", templateArray)
+        const removeTemplates = <MeasuredTemplate[]>canvas.templates?.placeables.filter(i => i.data.flags["midi-items-community"]?.[flagName]?.ActorId === actor.id);
+        const templateArray = removeTemplates.map(function (w) { return w.id })
+        if (removeTemplates) await canvas.scene?.deleteEmbeddedDocuments("MeasuredTemplate", templateArray)
     };
 
     static async deleteTokens(flagName, actor) {
-        let removeTokens = canvas.tokens.placeables.filter(i => i.data.flags["midi-srd"]?.[flagName]?.ActorId === actor.id);
-        let tokenArray = removeTokens.map(function (w) { return w.id })
-        if (removeTokens) await canvas.scene.deleteEmbeddedDocuments("Token", tokenArray)
+        const removeTokens = <Token[]>canvas.tokens?.placeables.filter(i => i.data.flags["midi-items-community"]?.[flagName]?.ActorId === actor.id) || <Token[]>[];
+        const tokenArray = removeTokens.map(function (w) { return w.id })
+        if (removeTokens) await canvas.scene?.deleteEmbeddedDocuments("Token", tokenArray)
     };
 
     /**
-     * 
-     * @param {String} flagName 
-     * @param {Actor5e} actor 
+     *
+     * @param {String} flagName
+     * @param {Actor5e} actor
      */
     static async deleteItems(flagName, actor) {
-        let items = actor.items.filter(i => i.data.flags["midi-srd"]?.[flagName] === actor.id)
-        let itemArray = items.map(function (w) { return w.data._id })
+        const items = actor.items.filter(i => i.data.flags["midi-items-community"]?.[flagName] === actor.id)
+        const itemArray = items.map(function (w) { return w.data._id })
         if (itemArray.length > 0) await actor.deleteEmbeddedDocuments("Item", [itemArray]);
     }
 
     /**
-     * 
-     * @param {String} name 
-     * @param {Actor5e} actor 
+     *
+     * @param {String} name
+     * @param {Actor5e} actor
      */
     static async addDfred(name, actor) {
-        await game.dfreds.effectInterface.addEffect({ effectName: name, uuid: actor.uuid })
+      //@ts-ignore
+      await game.dfreds.effectInterface.addEffect({ effectName: name, uuid: actor.uuid })
     }
 
     /**
-     * 
-     * @param {String} name 
-     * @param {Actor5e} actor 
+     *
+     * @param {String} name
+     * @param {Actor5e} actor
      */
     static async removeDfred(name, actor) {
-        await game.dfreds.effectInterface.removeEffect({ effectName: name, uuid: actor.uuid })
+      //@ts-ignore
+      await game.dfreds.effectInterface.removeEffect({ effectName: name, uuid: actor.uuid })
     }
 
     /**
-     * 
+     *
      * @param {Token} token Token to move
      * @param {Number} maxRange Range in ft
      * @param {String} name Name of the Effect
      * @param {Boolean} animate Animate move, default false
      */
     static async moveToken(token, maxRange, name, animate = false){
-        let snap = token.data.width/2 === 0 ? 1 : -1
-        let {x, y} = await this.warpgateCrosshairs(token, maxRange, name, token.data.img, token.data, snap)
-        let pos = canvas.grid.getSnappedPosition(x-5, y-5, 1)
+        const snap = token.data.width/2 === 0 ? 1 : -1
+        const {x, y} = await this.warpgateCrosshairs(token, maxRange, name, token.data.img, token.data, snap)
+        const pos = canvas.grid?.getSnappedPosition(x-5, y-5, 1)
         await token.document.update(pos, {animate : animate})
     }
 
     /**
-     * 
+     *
      * @param {Token} source Source of range distance (usually)
      * @param {Number} maxRange range of crosshairs
      * @param {String} name Name to use
      * @param {String} icon Crosshairs Icon
-     * @param {Object} tokenData {height; width} 
+     * @param {Object} tokenData {height; width}
      * @param {Number} snap snap position, 2: half grid intersections, 1: on grid intersections, 0: no snap, -1: grid centers, -2: half grid centers
-     * @returns 
+     * @returns
      */
     static async warpgateCrosshairs(source, maxRange, name, icon, tokenData, snap) {
         const sourceCenter = source.center;
@@ -99,9 +104,10 @@ class MidiMacros {
 
             while (crosshairs.inFlight) {
                 //wait for initial render
+                //@ts-ignore
                 await warpgate.wait(100);
                 const ray = new Ray(sourceCenter, crosshairs);
-                const distance = canvas.grid.measureDistances([{ ray }], { gridSpaces: true })[0]
+                const distance = <number>canvas.grid?.measureDistances([{ ray }], { gridSpaces: true })[0]
 
                 //only update if the distance has changed
                 if (cachedDistance !== distance) {
@@ -120,6 +126,7 @@ class MidiMacros {
         const callbacks = {
             show: checkDistance
         }
+        //@ts-ignore
         const location = await warpgate.crosshairs.show({ size: tokenData.width, icon: source.data.img, label: '0 ft.', interval: snap }, callbacks)
         console.log(location)
 
@@ -133,9 +140,9 @@ class MidiMacros {
 
     static async aid(args) {
         const { actor, token, lArgs } = MidiMacros.targets(args)
-        let buf = (parseInt(args[1]) - 1) * 5;
-        let curHP = actor.data.data.attributes.hp.value;
-        let curMax = actor.data.data.attributes.hp.max;
+        const buf = (parseInt(args[1]) - 1) * 5;
+        const curHP = actor.data.data.attributes.hp.value;
+        const curMax = actor.data.data.attributes.hp.max;
 
         if (args[0] === "on") {
             await actor.update({ "data.attributes.hp.value": curHP + buf })
@@ -146,9 +153,9 @@ class MidiMacros {
     }
 
     static async alterSelf(args) {
-        //DAE Item Macro 
+        //DAE Item Macro
         const { actor, token, lArgs } = MidiMacros.targets(args)
-        let DAEitem = actor.items.find(i => i.name === `Unarmed Strike`); // find unarmed strike attack
+        const DAEitem = actor.items.find(i => i.name === `Unarmed Strike`); // find unarmed strike attack
         if (args[0] === "on") {
             new Dialog({
                 title: "Are you using Natural Weapons",
@@ -161,7 +168,8 @@ class MidiMacros {
                                 await ChatMessage.create({ content: "No unarmed strike found" }); // exit out if no unarmed strike
                                 return;
                             }
-                            let copy_item = duplicate(DAEitem);
+                            const copy_item = duplicate(DAEitem);
+                            //@ts-ignore
                             await DAE.setFlag(actor, 'AlterSelfSpell', copy_item.data.damage.parts[0][0]); //set flag of previous value
                             copy_item.data.damage.parts[0][0] = "1d6 +@mod"; //replace with new value
                             await await actor.updateEmbeddedDocuments("Item", [copy_item]); //update item
@@ -176,11 +184,13 @@ class MidiMacros {
             }).render(true);
         }
         if (args[0] === "off") {
-            let damage = DAE.getFlag(actor, 'AlterSelfSpell'); // find flag with previous values
+             //@ts-ignore
+            const damage = DAE.getFlag(actor, 'AlterSelfSpell'); // find flag with previous values
             if (!DAEitem) return;
-            let copy_item = duplicate(DAEitem);
+            const copy_item = duplicate(DAEitem);
             copy_item.data.damage.parts[0][0] = damage; //replace with old value
             await await actor.updateEmbeddedDocuments("Item", [copy_item]); //update item
+            //@ts-ignore
             await DAE.unsetFlag(actor, 'world', 'AlterSelfSpell',); //remove flag
             await ChatMessage.create({ content: `Alter Self expired, unarmed strike returned` });
         }
@@ -189,8 +199,8 @@ class MidiMacros {
     static async animateDead(args) {
         if (!game.modules.get("warpgate")?.active) ui.notifications.error("Please enable the Warp Gate module")
         const { actor, token, lArgs } = MidiMacros.targets(args)
-        if (!game.actors.getName("MidiSRD")) { await Actor.create({ name: "MidiSRD", type: "npc" }) }
-        let cycles = 1 + (lArgs.powerLevel - 3) * 2
+        if (!game.actors?.getName(CONSTANTS.MODULE_NAME)) { await Actor.create({ name: CONSTANTS.MODULE_NAME, type: "npc" }) }
+        const cycles = 1 + (lArgs.powerLevel - 3) * 2
         const buttonData = {
             buttons: [{
                 label: 'Zombie',
@@ -207,17 +217,19 @@ class MidiMacros {
             }
             ], title: 'Which type of Undead?'
         };
-        let pack = game.packs.get('dnd5e.monsters')
+        const pack = <CompendiumCollection<CompendiumCollection.Metadata>>game.packs.get('dnd5e.monsters')
         await pack.getIndex()
         for (let i = 0; i < cycles; i++) {
-            let dialog = await warpgate.buttonDialog(buttonData);
-            let index = pack.index.find(i => i.name === dialog.actor.name)
-            let compendium = await pack.getDocument(index._id)
-            let updates = {
+            //@ts-ignore
+            const dialog = await warpgate.buttonDialog(buttonData);
+            const index = <any>pack.index.find(i => i.name === dialog.actor.name)
+            const compendium = <any>await pack.getDocument(index._id)
+            const updates = {
                 token: compendium.data.token,
                 actor: compendium.toObject()
             }
-            await warpgate.spawn("MidiSRD", updates, {}, { controllingActor: actor });
+            //@ts-ignore
+            await warpgate.spawn(CONSTANTS.MODULE_NAME, updates, {}, { controllingActor: actor });
         }
     }
 
@@ -225,16 +237,16 @@ class MidiMacros {
         if (!game.modules.get("warpgate")?.active) ui.notifications.error("Please enable the Warp Gate module")
         const { actor, token, lArgs } = MidiMacros.targets(args)
         if (args[0] === "on") {
-            if (!game.actors.getName("MidiSRD")) { await Actor.create({ name: "MidiSRD", type: "npc" }) }
-            const sourceItem = await fromUuid(lArgs.origin)
-            texture = texture || sourceItem.img
-            let updates = {
-                token: { "name": "Arcane Eye", "img": texture, "dimVision": 30, scale: 0.4, "flags": { "midi-srd": { "ArcaneEye": { "ActorId": actor.id } } } },
+            if (!game.actors?.getName(CONSTANTS.MODULE_NAME)) { await Actor.create({ name: CONSTANTS.MODULE_NAME, type: "npc" }) }
+            const sourceItem = <Item>await fromUuid(lArgs.origin)
+            texture = texture || <string>sourceItem.img
+            const updates = {
+                token: { "name": "Arcane Eye", "img": texture, "dimVision": 30, scale: 0.4, "flags": { "midi-items-community": { "ArcaneEye": { "ActorId": actor.id } } } },
                 actor: { "name": "Arcane Eye" }
             }
-            let { x, y } = await MidiMacros.warpgateCrosshairs(token, 30, "Arcane Eye", texture, {}, -1)
-
-            await warpgate.spawnAt({ x, y }, "MidiSRD", updates, { controllingActor: actor },);
+            const { x, y } = await MidiMacros.warpgateCrosshairs(token, 30, "Arcane Eye", texture, {}, -1)
+            //@ts-ignore
+            await warpgate.spawnAt({ x, y }, CONSTANTS.MODULE_NAME, updates, { controllingActor: actor },);
         }
         if (args[0] === "off") {
             await MidiMacros.deleteTokens("ArcaneEye", actor)
@@ -245,9 +257,9 @@ class MidiMacros {
         const { actor, token, lArgs } = MidiMacros.targets(args)
         if (args[0] === "on") {
             if (!game.modules.get("warpgate")?.active) ui.notifications.error("Please enable the Warp Gate module")
-            if (!game.actors.getName("MidiSRD")) { await Actor.create({ name: "MidiSRD", type: "npc" }) }
-            const sourceItem = await fromUuid(lArgs.origin)
-            texture = texture || sourceItem.img
+            if (!game.actors?.getName(CONSTANTS.MODULE_NAME)) { await Actor.create({ name: CONSTANTS.MODULE_NAME, type: "npc" }) }
+            const sourceItem = <Item>await fromUuid(lArgs.origin)
+            texture = texture || <string>sourceItem.img
             const summonerDc = actor.data.data.attributes.spelldc;
             const summonerAttack = summonerDc - 8;
             const summonerMod = getProperty(actor, `data.data.abilities.${getProperty(actor, 'data.data.attributes.spellcasting')}.mod`)
@@ -259,8 +271,8 @@ class MidiMacros {
             if ((lArgs.powerLevel - 5) > 0) {
                 graspScale = ` + ${((lArgs.powerLevel - 5) * 2)}d6[upcast]`;
             }
-            let updates = {
-                token: { "name": "Arcane Hand", "img": texture, height: 2, width: 2, "flags": { "midi-srd": { "ArcaneHand": { "ActorId": actor.id } } } },
+            const updates = {
+                token: { "name": "Arcane Hand", "img": texture, height: 2, width: 2, "flags": { "midi-items-community": { "ArcaneHand": { "ActorId": actor.id } } } },
                 actor: {
                     "name": "Arcane Hand",
                     "data.attributes.hp": { value: actor.data.data.attributes.hp.max, max: actor.data.data.attributes.hp.max },
@@ -279,9 +291,9 @@ class MidiMacros {
                     }
                 }
             }
-            let { x, y } = await MidiMacros.warpgateCrosshairs(token, 120, "Arcane Hand", texture, { height: 2, width: 2 }, 1)
-
-            await warpgate.spawnAt({ x, y }, "MidiSRD", updates, { controllingActor: actor });
+            const { x, y } = await MidiMacros.warpgateCrosshairs(token, 120, "Arcane Hand", texture, { height: 2, width: 2 }, 1)
+            //@ts-ignore
+            await warpgate.spawnAt({ x, y }, CONSTANTS.MODULE_NAME, updates, { controllingActor: actor });
         }
         if (args[0] === "off") {
             await MidiMacros.deleteTokens("ArcaneHand", actor)
@@ -292,36 +304,36 @@ class MidiMacros {
         //DAE Macro Execute, Effect Value = "Macro Name" @target
         const { actor, token, lArgs } = MidiMacros.targets(args)
 
-        let casterToken = canvas.tokens.get(lArgs.tokenId) || token;
+        const casterToken = canvas.tokens?.get(lArgs.tokenId) || token;
         const DAEitem = lArgs.efData.flags.dae.itemData
         const saveData = DAEitem.data.save
         /**
          * Create Arcane Sword item in inventory
          */
         if (args[0] === "on") {
-            let image = DAEitem.img;
-            let range = canvas.scene.createEmbeddedDocuments("MeasuredTemplate", [{
+            const image = DAEitem.img;
+            const range = <any>canvas.scene?.createEmbeddedDocuments("MeasuredTemplate", [{
                 t: "circle",
-                user: game.user._id,
-                x: casterToken.x + canvas.grid.size / 2,
-                y: casterToken.y + canvas.grid.size / 2,
+                user: <string>game.user?.id,
+                x: casterToken.x + <number>canvas.grid?.size / 2,
+                y: casterToken.y + <number>canvas.grid?.size / 2,
                 direction: 0,
                 distance: 60,
                 borderColor: "#FF0000",
-                flags: { "midi-srd": { ArcaneSwordRange: { ActorId: actor.id } } }
+                flags: { "midi-items-community": { ArcaneSwordRange: { ActorId: actor.id } } }
                 //fillColor: "#FF3366",
             }]);
             range.then(result => {
-                let templateData = {
+                const templateData = {
                     t: "rect",
-                    user: game.user.id,
+                    user: game.user?.id,
                     distance: 7,
                     direction: 45,
                     texture: texture || "",
                     x: 0,
                     y: 0,
-                    flags: { "midi-srd": { ArcaneSword: { ActorId: actor.id } } },
-                    fillColor: game.user.color
+                    flags: { "midi-items-community": { ArcaneSword: { ActorId: actor.id } } },
+                    fillColor: game.user?.color
                 }
                 Hooks.once("createMeasuredTemplate", deleteTemplates);
 
@@ -366,7 +378,7 @@ class MidiMacros {
                         "proficient": true,
                     },
                     "flags": {
-                        "midi-srd": {
+                        "midi-items-community": {
                             "ArcaneSword":
                                 actor.id
                         }
@@ -425,7 +437,7 @@ class MidiMacros {
             }).render(true);
         }
         if (args[0] === "off") {
-            let flag = DAE.getFlag(actor, "DAEBlind")
+            const flag = DAE.getFlag(actor, "DAEBlind")
             if (flag === "blind") {
                 await MidiMacros.removeDfred("Blinded", actor)
             } else if (flag === "deaf") {
@@ -445,7 +457,7 @@ class MidiMacros {
          * Create Call Lightning Bolt item in inventory
          */
         if (args[0] === "on") {
-            let templateData = {
+            const templateData = {
                 t: "circle",
                 user: game.user._id,
                 distance: 60,
@@ -453,7 +465,7 @@ class MidiMacros {
                 x: 0,
                 y: 0,
                 texture: texture || "",
-                flags: { "midi-srd": { CallLighting: { ActorId: actor.id } } },
+                flags: { "midi-items-community": { CallLighting: { ActorId: actor.id } } },
                 fillColor: game.user.color
             }
             MidiMacros.templateCreation(templateData, actor)
@@ -503,7 +515,7 @@ class MidiMacros {
                             "formula": ""
                         },
                     },
-                    "flags": { "midi-srd": { "CallLighting": { "ActorId": actor.id } } },
+                    "flags": { "midi-items-community": { "CallLighting": { "ActorId": actor.id } } },
                     "img": "systems/dnd5e/icons/spells/lighting-sky-2.jpg",
                     "effects": []
                 }]
@@ -521,7 +533,7 @@ class MidiMacros {
         const { actor, token, lArgs } = MidiMacros.targets(args)
         if (args[0] === "each") {
 
-            let confusionRoll = await new Roll("1d10").evaluate({ async: false }).total;
+            const confusionRoll = await new Roll("1d10").evaluate({ async: false }).total;
             let content;
             switch (confusionRoll) {
                 case 1:
@@ -568,21 +580,21 @@ class MidiMacros {
         }
 
         if (args[0] === "each") {
-            let contagion = lArgs.efData;
+            const contagion = lArgs.efData;
             if (contagion.label === "Contagion")
                 Contagion()
         }
 
-        /** 
+        /**
          * Execute contagion effects, update flag counts or remove effect
-         * 
+         *
          * @param {Actor5e} combatant Current combatant to test against
          * @param {Number} save Target DC for save
          */
         async function Contagion() {
-            let flag = DAE.getFlag(actor, "ContagionSpell",);
+            const flag = DAE.getFlag(actor, "ContagionSpell",);
             const flavor = `${CONFIG.DND5E.abilities["con"]} DC${dc} ${DAEItem?.name || ""}`;
-            let saveRoll = (await actor.rollAbilitySave("con", { flavor })).total;
+            const saveRoll = (await actor.rollAbilitySave("con", { flavor })).total;
 
             if (saveRoll < dc) {
                 if (flag.count === 2) {
@@ -591,7 +603,7 @@ class MidiMacros {
                     return;
                 }
                 else {
-                    let contagionCount = (flag.count + 1);
+                    const contagionCount = (flag.count + 1);
                     await DAE.setFlag(actor, "ContagionSpell", {
                         count: contagionCount
                     });
@@ -614,7 +626,7 @@ class MidiMacros {
                     one: {
                         label: "Blinding Sickness",
                         callback: async () => {
-                            let data = {
+                            const data = {
                                 changes: [
                                     {
                                         key: "flags.midi-qol.disadvantage.ability.check.wis",
@@ -639,7 +651,7 @@ class MidiMacros {
                     two: {
                         label: "Filth Fever",
                         callback: async () => {
-                            let data = {
+                            const data = {
                                 changes: [
                                     {
                                         key: "flags.midi-qol.disadvantage.attack.mwak",
@@ -675,7 +687,7 @@ class MidiMacros {
                     three: {
                         label: "Flesh Rot",
                         callback: async () => {
-                            let data = {
+                            const data = {
                                 changes: [
                                     {
                                         key: "flags.midi-qol.disadvantage.ability.check.cha",
@@ -700,7 +712,7 @@ class MidiMacros {
                     four: {
                         label: "Mindfire",
                         callback: async () => {
-                            let data = {
+                            const data = {
                                 changes: [
                                     {
                                         key: "flags.midi-qol.disadvantage.ability.check.int",
@@ -725,7 +737,7 @@ class MidiMacros {
                     five: {
                         label: "Seizure",
                         callback: async () => {
-                            let data = {
+                            const data = {
                                 changes: [
                                     {
                                         key: "flags.midi-qol.disadvantage.attack.mwak",
@@ -762,7 +774,7 @@ class MidiMacros {
                     six: {
                         label: "Slimy Doom",
                         callback: async () => {
-                            let data = {
+                            const data = {
                                 changes: [
                                     {
                                         key: "flags.midi-qol.disadvantage.ability.check.con",
@@ -793,8 +805,8 @@ class MidiMacros {
     static async createUndead(args) {
         if (!game.modules.get("warpgate")?.active) ui.notifications.error("Please enable the Warp Gate module")
         const { actor, token, lArgs } = MidiMacros.targets(args)
-        if (!game.actors.getName("MidiSRD")) { await Actor.create({ name: "MidiSRD", type: "npc" }) }
-        let spelllevel = lArgs.powerLevel
+        if (!game.actors.getName(CONSTANTS.MODULE_NAME)) { await Actor.create({ name: CONSTANTS.MODULE_NAME, type: "npc" }) }
+        const spelllevel = lArgs.powerLevel
         const buttonData = {
             buttons: [{
                 label: 'Ghouls',
@@ -829,24 +841,24 @@ class MidiMacros {
                 cycles: 2
             }
         })
-        let pack = game.packs.get('dnd5e.monsters')
+        const pack = game.packs.get('dnd5e.monsters')
         await pack.getIndex()
-        let dialog = await warpgate.buttonDialog(buttonData);
-        let index = pack.index.find(i => i.name === dialog.actor.name)
-        let compendium = await pack.getDocument(index._id)
+        const dialog = await warpgate.buttonDialog(buttonData);
+        const index = pack.index.find(i => i.name === dialog.actor.name)
+        const compendium = await pack.getDocument(index._id)
 
-        let updates = {
+        const updates = {
             token: compendium.data.token,
             actor: compendium.toObject()
         }
-        await warpgate.spawn("MidiSRD", updates, {}, { controllingActor: actor, duplicates: dialog.cycles });
+        await warpgate.spawn(CONSTANTS.MODULE_NAME, updates, {}, { controllingActor: actor, duplicates: dialog.cycles });
     }
 
     static async darkness(args) {
         if (!game.modules.get("advanced-macros")?.active) ui.notifications.error("Please enable the Advanced Macros module")
         const { actor, token, lArgs } = MidiMacros.targets(args)
         if (args[0] === "on") {
-            let templateData = {
+            const templateData = {
                 t: "circle",
                 user: game.user._id,
                 distance: 15,
@@ -854,11 +866,11 @@ class MidiMacros {
                 x: 0,
                 y: 0,
                 fillColor: game.user.color,
-                flags: { "midi-srd": { Darkness: { ActorId: actor.id } } }
+                flags: { "midi-items-community": { Darkness: { ActorId: actor.id } } }
             };
 
             Hooks.once("createMeasuredTemplate", async (template) => {
-                let radius = canvas.grid.size * (template.data.distance / canvas.grid.grid.options.dimensions.distance)
+                const radius = canvas.grid.size * (template.data.distance / canvas.grid.grid.options.dimensions.distance)
                 circleWall(template.data.x, template.data.y, radius)
 
                 await canvas.scene.deleteEmbeddedDocuments("MeasuredTemplate", [template.id]);
@@ -866,16 +878,16 @@ class MidiMacros {
             MidiMacros.templateCreation(templateData, actor)
 
             async function circleWall(cx, cy, radius) {
-                let data = [];
+                const data = [];
                 const step = 30;
                 for (let i = step; i <= 360; i += step) {
-                    let theta0 = Math.toRadians(i - step);
-                    let theta1 = Math.toRadians(i);
+                    const theta0 = Math.toRadians(i - step);
+                    const theta1 = Math.toRadians(i);
 
-                    let lastX = Math.floor(radius * Math.cos(theta0) + cx);
-                    let lastY = Math.floor(radius * Math.sin(theta0) + cy);
-                    let newX = Math.floor(radius * Math.cos(theta1) + cx);
-                    let newY = Math.floor(radius * Math.sin(theta1) + cy);
+                    const lastX = Math.floor(radius * Math.cos(theta0) + cx);
+                    const lastY = Math.floor(radius * Math.sin(theta0) + cy);
+                    const newX = Math.floor(radius * Math.cos(theta1) + cx);
+                    const newY = Math.floor(radius * Math.sin(theta1) + cy);
 
                     data.push({
                         c: [lastX, lastY, newX, newY],
@@ -884,7 +896,7 @@ class MidiMacros {
                         dir: CONST.WALL_DIRECTIONS.BOTH,
                         door: CONST.WALL_DOOR_TYPES.NONE,
                         ds: CONST.WALL_DOOR_STATES.CLOSED,
-                        flags: { "midi-srd": { Darkness: { ActorId: actor.id } } }
+                        flags: { "midi-items-community": { Darkness: { ActorId: actor.id } } }
                     });
                 }
                 await canvas.scene.createEmbeddedDocuments("Wall", data)
@@ -893,8 +905,8 @@ class MidiMacros {
 
         if (args[0] === "off") {
             async function removeWalls() {
-                let darkWalls = canvas.walls.placeables.filter(w => w.data.flags["midi-srd"]?.Darkness?.ActorId === actor.id)
-                let wallArray = darkWalls.map(function (w) {
+                const darkWalls = canvas.walls.placeables.filter(w => w.data.flags["midi-items-community"]?.Darkness?.ActorId === actor.id)
+                const wallArray = darkWalls.map(function (w) {
                     return w.data._id
                 })
                 await canvas.scene.deleteEmbeddedDocuments("Wall", wallArray)
@@ -945,13 +957,13 @@ class MidiMacros {
                     one: {
                         label: "Bear's Endurance",
                         callback: async () => {
-                            let formula = `2d6`;
-                            let amount = new Roll(formula).roll().total;
+                            const formula = `2d6`;
+                            const amount = new Roll(formula).roll().total;
                             await DAE.setFlag(actor, 'enhanceAbility', {
                                 name: "bear",
                             });
-                            let effect = actor.effects.find(i => i.data.label === "Enhance Ability");
-                            let changes = effect.data.changes;
+                            const effect = actor.effects.find(i => i.data.label === "Enhance Ability");
+                            const changes = effect.data.changes;
                             changes[1] = {
                                 key: "flags.midi-qol.advantage.ability.save.con",
                                 mode: 0,
@@ -970,8 +982,8 @@ class MidiMacros {
                             await DAE.setFlag(actor, 'enhanceAbility', {
                                 name: "bull",
                             });
-                            let effect = actor.effects.find(i => i.data.label === "Enhance Ability");
-                            let changes = effect.data.changes;
+                            const effect = actor.effects.find(i => i.data.label === "Enhance Ability");
+                            const changes = effect.data.changes;
                             changes[1] = {
                                 key: "flags.midi-qol.advantage.ability.check.str",
                                 mode: 0,
@@ -989,8 +1001,8 @@ class MidiMacros {
                             await DAE.setFlag(actor, 'enhanceAbility', {
                                 name: "cat",
                             });
-                            let effect = actor.effects.find(i => i.data.label === "Enhance Ability");
-                            let changes = effect.data.changes;
+                            const effect = actor.effects.find(i => i.data.label === "Enhance Ability");
+                            const changes = effect.data.changes;
                             changes[1] = {
                                 key: "flags.midi-qol.advantage.ability.check.dex",
                                 mode: 0,
@@ -1007,8 +1019,8 @@ class MidiMacros {
                             await DAE.setFlag(actor, 'enhanceAbility', {
                                 name: "eagle",
                             });
-                            let effect = actor.effects.find(i => i.data.label === "Enhance Ability");
-                            let changes = effect.data.changes;
+                            const effect = actor.effects.find(i => i.data.label === "Enhance Ability");
+                            const changes = effect.data.changes;
                             changes[1] = {
                                 key: "flags.midi-qol.advantage.ability.check.cha",
                                 mode: 0,
@@ -1025,8 +1037,8 @@ class MidiMacros {
                             await DAE.setFlag(actor, 'enhanceAbility', {
                                 name: "fox",
                             });
-                            let effect = actor.effects.find(i => i.data.label === "Enhance Ability");
-                            let changes = effect.data.changes;
+                            const effect = actor.effects.find(i => i.data.label === "Enhance Ability");
+                            const changes = effect.data.changes;
                             changes[1] = {
                                 key: "flags.midi-qol.advantage.ability.check.int",
                                 mode: 0,
@@ -1043,8 +1055,8 @@ class MidiMacros {
                             await DAE.setFlag(actor, 'enhanceAbility', {
                                 name: "owl",
                             });
-                            let effect = actor.effects.find(i => i.data.label === "Enhance Ability");
-                            let changes = effect.data.changes;
+                            const effect = actor.effects.find(i => i.data.label === "Enhance Ability");
+                            const changes = effect.data.changes;
                             changes[1] = {
                                 key: "flags.midi-qol.advantage.ability.check.wis",
                                 mode: 0,
@@ -1059,7 +1071,7 @@ class MidiMacros {
         }
 
         if (args[0] === "off") {
-            let flag = DAE.getFlag(actor, 'enhanceAbility');
+            const flag = DAE.getFlag(actor, 'enhanceAbility');
             if (flag.name === "bull") actor.unsetFlag('dnd5e', 'powerfulBuild', false);
             await DAE.unsetFlag(actor, 'enhanceAbility');
             await ChatMessage.create({ content: "Enhance Ability has expired" });
@@ -1068,8 +1080,8 @@ class MidiMacros {
 
     static async enlargeReduce(args) {
         const { actor, token, lArgs } = MidiMacros.targets(args)
-        let originalSize = token.data.width;
-        let mwak = actor.data.data.bonuses.mwak.damage;
+        const originalSize = token.data.width;
+        const mwak = actor.data.data.bonuses.mwak.damage;
 
         if (args[0] === "on") {
             new Dialog({
@@ -1078,8 +1090,8 @@ class MidiMacros {
                     one: {
                         label: "Enlarge",
                         callback: async () => {
-                            let bonus = mwak + "+ 1d4";
-                            let enlarge = (originalSize + 1);
+                            const bonus = mwak + "+ 1d4";
+                            const enlarge = (originalSize + 1);
                             await actor.update({ "data.bonuses.mwak.damage": bonus });
                             await token.document.update({ "width": enlarge, "height": enlarge });
                             await DAE.setFlag(actor, 'enlageReduceSpell', {
@@ -1092,9 +1104,9 @@ class MidiMacros {
                     two: {
                         label: "Reduce",
                         callback: async () => {
-                            let bonus = mwak + " -1d4";
-                            let size = originalSize;
-                            let newSize = (size > 1) ? (size - 1) : (size - 0.3);
+                            const bonus = mwak + " -1d4";
+                            const size = originalSize;
+                            const newSize = (size > 1) ? (size - 1) : (size - 0.3);
                             await actor.update({ "data.bonuses.mwak.damage": bonus });
                             await token.document.update({ "width": newSize, "height": newSize });
                             await DAE.setFlag(actor, 'enlageReduceSpell', {
@@ -1108,7 +1120,7 @@ class MidiMacros {
             }).render(true);
         }
         if (args[0] === "off") {
-            let flag = DAE.getFlag(actor, 'enlageReduceSpell');
+            const flag = DAE.getFlag(actor, 'enlageReduceSpell');
             await actor.update({ "data.bonuses.mwak.damage": flag.ogMwak });
             await token.document.update({ "width": flag.size, "height": flag.size });
             await DAE.unsetFlag(actor, 'enlageReduceSpell');
@@ -1129,9 +1141,9 @@ class MidiMacros {
                     one: {
                         label: "Asleep",
                         callback: async () => {
-                            for (let t of game.user.targets) {
+                            for (const t of game.user.targets) {
                                 const flavor = `${CONFIG.DND5E.abilities["wis"]} DC${DC} ${DAEItem?.name || ""}`;
-                                let saveRoll = (await actor.rollAbilitySave("wis", { flavor, fastFoward: true })).total;
+                                const saveRoll = (await actor.rollAbilitySave("wis", { flavor, fastFoward: true })).total;
                                 if (saveRoll < DC) {
                                     await ChatMessage.create({ content: `${t.name} failed the save with a ${saveRoll}` });
                                     await MidiMacros.addDfred("Unconscious", actor);
@@ -1145,9 +1157,9 @@ class MidiMacros {
                     two: {
                         label: "Panicked",
                         callback: async () => {
-                            for (let t of game.user.targets) {
+                            for (const t of game.user.targets) {
                                 const flavor = `${CONFIG.DND5E.abilities["wis"]} DC${DC} ${DAEItem?.name || ""}`;
-                                let saveRoll = (await actor.rollAbilitySave("wis", { flavor, fastFoward: true })).total;
+                                const saveRoll = (await actor.rollAbilitySave("wis", { flavor, fastFoward: true })).total;
                                 if (saveRoll < DC) {
                                     await ChatMessage.create({ content: `${t.name} failed the save with a ${saveRoll}` });
                                     await MidiMacros.addDfred("Frightened", actor);
@@ -1161,9 +1173,9 @@ class MidiMacros {
                     three: {
                         label: "Sickened",
                         callback: async () => {
-                            for (let t of game.user.targets) {
+                            for (const t of game.user.targets) {
                                 const flavor = `${CONFIG.DND5E.abilities["wis"]} DC${DC} ${DAEItem?.name || ""}`;
-                                let saveRoll = (await actor.rollAbilitySave("wis", { flavor, fastFoward: true })).total;
+                                const saveRoll = (await actor.rollAbilitySave("wis", { flavor, fastFoward: true })).total;
                                 if (saveRoll < DC) {
                                     await ChatMessage.create({ content: `${t.name} failed the save with a ${saveRoll}` });
                                     await MidiMacros.addDfred("Poisoned", actor);
@@ -1191,7 +1203,7 @@ class MidiMacros {
     static async findSteed(args) {
         if (!game.modules.get("warpgate")?.active) ui.notifications.error("Please enable the Warp Gate module")
         const { actor, token, lArgs } = MidiMacros.targets(args)
-        if (!game.actors.getName("MidiSRD")) { await Actor.create({ name: "MidiSRD", type: "npc" }) }
+        if (!game.actors.getName(CONSTANTS.MODULE_NAME)) { await Actor.create({ name: CONSTANTS.MODULE_NAME, type: "npc" }) }
         const menuData = {
             inputs: [{
                 label: "Fey",
@@ -1246,18 +1258,18 @@ class MidiMacros {
             },
             ], title: 'What type of steed?'
         };
-        let pack = game.packs.get('dnd5e.monsters')
+        const pack = game.packs.get('dnd5e.monsters')
         await pack.getIndex()
-        let dialog = await warpgate.menu(menuData);
-        let index = pack.index.find(i => i.name === dialog.buttons.actor.name)
-        let compendium = await pack.getDocument(index._id)
+        const dialog = await warpgate.menu(menuData);
+        const index = pack.index.find(i => i.name === dialog.buttons.actor.name)
+        const compendium = await pack.getDocument(index._id)
 
-        let updates = {
+        const updates = {
             token: compendium.data.token,
             actor: compendium.toObject()
         }
         updates.actor.data.details.type.value = dialog.inputs.find(i => !!i).toLowerCase()
-        await warpgate.spawn("MidiSRD", updates, {}, { controllingActor: actor, });
+        await warpgate.spawn(CONSTANTS.MODULE_NAME, updates, {}, { controllingActor: actor, });
     }
 
     static async fireShield(args) {
@@ -1269,7 +1281,7 @@ class MidiMacros {
                     one: {
                         label: "Warm",
                         callback: async () => {
-                            let resistances = duplicate(actor.data.data.traits.dr.value);
+                            const resistances = duplicate(actor.data.data.traits.dr.value);
                             resistances.push("cold");
                             await actor.update({ "data.traits.dr.value": resistances });
                             await DAE.setFlag(actor, 'FireShield', "cold");
@@ -1303,7 +1315,7 @@ class MidiMacros {
                     two: {
                         label: "Cold",
                         callback: async () => {
-                            let resistances = duplicate(actor.data.data.traits.dr.value);
+                            const resistances = duplicate(actor.data.data.traits.dr.value);
                             resistances.push("fire");
                             await actor.update({ "data.traits.dr.value": resistances });
                             await DAE.setFlag(actor, 'FireShield', "fire");
@@ -1338,9 +1350,9 @@ class MidiMacros {
             }).render(true);
         }
         if (args[0] === "off") {
-            let item = actor.items.getName("Summoned Fire Shield")
-            let element = DAE.getFlag(actor, 'FireShield');
-            let resistances = actor.data.data.traits.dr.value;
+            const item = actor.items.getName("Summoned Fire Shield")
+            const element = DAE.getFlag(actor, 'FireShield');
+            const resistances = actor.data.data.traits.dr.value;
             const index = resistances.indexOf(element);
             resistances.splice(index, 1);
             await actor.update({ "data.traits.dr.value": resistances });
@@ -1357,7 +1369,7 @@ class MidiMacros {
         const DAEItem = lArgs.efData.flags.dae.itemData
 
         if (args[0] === "on") {
-            let weaponDamge = 2 + Math.floor(DAEItem.data.level / 2);
+            const weaponDamge = 2 + Math.floor(DAEItem.data.level / 2);
             await actor.createEmbeddedDocuments("Item",
                 [{
                     "name": "Summoned Flame Blade",
@@ -1393,7 +1405,7 @@ class MidiMacros {
                         "proficient": true,
                     },
                     "flags": {
-                        "midi-srd": {
+                        "midi-items-community": {
                             "FlameBlade":
                                 actor.id
                         }
@@ -1416,7 +1428,7 @@ class MidiMacros {
         const { actor, token, lArgs } = MidiMacros.targets(args)
         const DAEItem = lArgs.efData.flags.dae.itemData
         const saveData = DAEItem.data.save
-        let dc = args[1]
+        const dc = args[1]
 
         if (args[0] === "on") {
             await MidiMacros.addDfred("Restrained", actor)
@@ -1432,14 +1444,14 @@ class MidiMacros {
         }
 
         if (args[0] === "each") {
-            let flag = DAE.getFlag(actor, "FleshToStoneSpell");
+            const flag = DAE.getFlag(actor, "FleshToStoneSpell");
             if (flag.failures === 3) return;
             const flavor = `${CONFIG.DND5E.abilities[saveData.ability]} DC${dc} ${DAEItem?.name || ""}`;
-            let saveRoll = (await actor.rollAbilitySave(saveData.ability, { flavor, fastForward: true })).total;
+            const saveRoll = (await actor.rollAbilitySave(saveData.ability, { flavor, fastForward: true })).total;
 
             if (saveRoll < dc) {
                 if (flag.failures === 2) {
-                    let fleshToStoneFailures = (flag.failures + 1);
+                    const fleshToStoneFailures = (flag.failures + 1);
                     await DAE.setFlag(actor, "FleshToStoneSpell", {
                         failures: fleshToStoneFailures
                     });
@@ -1448,7 +1460,7 @@ class MidiMacros {
                     return;
                 }
                 else {
-                    let fleshToStoneFailures = (flag.failures + 1);
+                    const fleshToStoneFailures = (flag.failures + 1);
                     await DAE.setFlag(actor, "FleshToStoneSpell", {
                         failures: fleshToStoneFailures
                     });
@@ -1463,7 +1475,7 @@ class MidiMacros {
                     return;
                 }
                 else {
-                    let fleshToStoneSuccesses = (flag.successes + 1);
+                    const fleshToStoneSuccesses = (flag.successes + 1);
                     await DAE.setFlag(actor, "FleshToStoneSpell", {
                         successes: fleshToStoneSuccesses
                     });
@@ -1473,7 +1485,7 @@ class MidiMacros {
         }
 
         async function FleshToStoneUpdate() {
-            let fleshToStone = actor.effects.get(lArgs.effectId);
+            const fleshToStone = actor.effects.get(lArgs.effectId);
             let icon = fleshToStone.data.icon;
             if (game.modules.get("dfreds-convenient-effects").active) icon = "modules/dfreds-convenient-effects/images/petrified.svg";
             else icon = "icons/svg/paralysis.svg"
@@ -1489,7 +1501,7 @@ class MidiMacros {
         if (!game.modules.get("warpgate")?.active) ui.notifications.error("Please enable the Warp Gate module")
         const { actor, token, lArgs } = MidiMacros.targets(args)
         if (args[0] === "on") {
-            if (!game.actors.getName("MidiSRD")) { await Actor.create({ name: "MidiSRD", type: "npc" }) }
+            if (!game.actors.getName(CONSTANTS.MODULE_NAME)) { await Actor.create({ name: CONSTANTS.MODULE_NAME, type: "npc" }) }
             const buttonData = {
                 buttons: [{
                     label: 'Centipedes',
@@ -1523,18 +1535,18 @@ class MidiMacros {
                 },
                 ], title: 'Which type of insect?'
             };
-            let pack = game.packs.get('dnd5e.monsters')
+            const pack = game.packs.get('dnd5e.monsters')
             await pack.getIndex()
-            let dialog = await warpgate.buttonDialog(buttonData);
-            let index = pack.index.find(i => i.name === dialog.actor.name)
-            let compendium = await pack.getDocument(index._id)
+            const dialog = await warpgate.buttonDialog(buttonData);
+            const index = pack.index.find(i => i.name === dialog.actor.name)
+            const compendium = await pack.getDocument(index._id)
 
-            let updates = {
+            const updates = {
                 token: compendium.data.token,
                 actor: compendium.toObject()
             }
-            updates.token.flags["midi-srd"] = { "GiantInsect": { ActorId: actor.id } }
-            await warpgate.spawn("MidiSRD", updates, {}, { controllingActor: actor, duplicates: dialog.cycles });
+            updates.token.flags["midi-items-community"] = { "GiantInsect": { ActorId: actor.id } }
+            await warpgate.spawn(CONSTANTS.MODULE_NAME, updates, {}, { controllingActor: actor, duplicates: dialog.cycles });
         }
         if (args[0] === "off") {
             MidiMacros.deleteTokens("GiantInsect", actor)
@@ -1555,7 +1567,7 @@ class MidiMacros {
 
     static async heroism(args) {
         const { actor, token, lArgs } = MidiMacros.targets(args)
-        let mod = args[1];
+        const mod = args[1];
         if (args[0] === "on") {
             await ChatMessage.create({ content: `Heroism is applied to ${actor.name}` })
         }
@@ -1563,7 +1575,7 @@ class MidiMacros {
             await ChatMessage.create({ content: "Heroism ends" });
         }
         if (args[0] === "each") {
-            let bonus = mod > actor.data.data.attributes.hp.temp ? mod : actor.data.data.attributes.hp.temp
+            const bonus = mod > actor.data.data.attributes.hp.temp ? mod : actor.data.data.attributes.hp.temp
             await actor.update({ "data.attributes.hp.temp": mod });
             await ChatMessage.create({ content: "Heroism continues on " + actor.name })
         }
@@ -1574,7 +1586,7 @@ class MidiMacros {
         const DAEItem = lArgs.efData.flags.dae.itemData
         const saveData = DAEItem.data.save
 
-        let caster = canvas.tokens.placeables.find(token => token?.actor?.items.get(DAEItem._id) != null)
+        const caster = canvas.tokens.placeables.find(token => token?.actor?.items.get(DAEItem._id) != null)
 
         if (args[0] === "on") {
             if (actor.data.data.abilities.int.value < 4) actor.deleteEmbeddedEntity("ActiveEffect", lArgs.efData._id)
@@ -1585,12 +1597,12 @@ class MidiMacros {
             console.log("SetHook")
             const hookId = Hooks.on("preUpdateActor", async (actor, update) => {
                 if (!"actorData.data.attributes.hp" in update) return;
-                let oldHP = actor.data.data.attributes.hp.value;
-                let newHP = getProperty(update, "data.attributes.hp.value");
-                let hpChange = oldHP - newHP
+                const oldHP = actor.data.data.attributes.hp.value;
+                const newHP = getProperty(update, "data.attributes.hp.value");
+                const hpChange = oldHP - newHP
                 if (hpChange > 0 && typeof hpChange === "number") {
                     const flavor = `${CONFIG.DND5E.abilities["wis"]} DC${saveData.dc} ${DAEItem?.name || ""}`;
-                    let saveRoll = (await actor.rollAbilitySave(saveData.ability, { flavor, fastForward: true, advantage: true })).total;
+                    const saveRoll = (await actor.rollAbilitySave(saveData.ability, { flavor, fastForward: true, advantage: true })).total;
                     if (saveRoll < saveData.dc) return;
                     await actor.deleteEmbeddedDocuments("ActiveEffect", [lArgs.efData._id])
 
@@ -1598,7 +1610,7 @@ class MidiMacros {
             })
             if (args[0] !== "on") {
                 const flavor = `${CONFIG.DND5E.abilities["wis"]} DC${saveData.dc} ${DAEItem?.name || ""}`;
-                let saveRoll = (await actor.rollAbilitySave(saveData.ability, { flavor })).total;
+                const saveRoll = (await actor.rollAbilitySave(saveData.ability, { flavor })).total;
                 if (saveRoll >= saveData.dc) {
                     actor.deleteEmbeddedDocuments("ActiveEffect", [lArgs.efData._id])
                 }
@@ -1607,7 +1619,7 @@ class MidiMacros {
         }
 
         async function RemoveHook() {
-            let flag = await DAE.getFlag(actor, 'hideousLaughterHook');
+            const flag = await DAE.getFlag(actor, 'hideousLaughterHook');
             Hooks.off("preUpdateActor", flag);
             await DAE.unsetFlag(actor, "hideousLaughterHook");
             if (args[0] === "off") game.cub.addCondition("Prone", actor)
@@ -1637,7 +1649,7 @@ class MidiMacros {
                         label: "Yes",
                         callback: async () => {
                             const flavor = `${CONFIG.DND5E.abilities[saveData.ability]} DC${DC} ${DAEItem?.name || ""}`;
-                            let saveRoll = (await actor.rollAbilitySave(saveData.ability, { flavor })).total;
+                            const saveRoll = (await actor.rollAbilitySave(saveData.ability, { flavor })).total;
 
                             if (saveRoll >= DC) {
                                 await actor.deleteEmbeddedDocuments("ActiveEffect", [lArgs.effectId]);
@@ -1675,14 +1687,14 @@ class MidiMacros {
         const { actor, token, lArgs } = MidiMacros.targets(args)
         const DAEItem = lArgs.efData.flags.dae.itemData
 
-        let weapons = actor.items.filter(i => i.data.type === `weapon`);
+        const weapons = actor.items.filter(i => i.data.type === `weapon`);
         let weapon_content = ``;
 
         function value_limit(val, min, max) {
             return val < min ? min : (val > max ? max : val);
         };
         //Filter for weapons
-        for (let weapon of weapons) {
+        for (const weapon of weapons) {
             weapon_content += `<label class="radio-label">
                 <input type="radio" name="weapon" value="${weapon.id}">
                 <img src="${weapon.img}" style="border:0px; width: 50px; height:50px;">
@@ -1694,7 +1706,7 @@ class MidiMacros {
          * Select for weapon and apply bonus based on spell level
          */
         if (args[0] === "on") {
-            let content = `
+            const content = `
                 <form class="magicWeapon">
                 <div class="form-group" id="weapons">
                     ${weapon_content}
@@ -1710,13 +1722,13 @@ class MidiMacros {
                     {
                         label: `Ok`,
                         callback: async (html) => {
-                            let itemId = $("input[type='radio'][name='weapon']:checked").val();
-                            let weaponItem = actor.items.get(itemId);
-                            let copy_item = duplicate(weaponItem);
-                            let spellLevel = Math.floor(DAEItem.data.level / 2);
-                            let bonus = value_limit(spellLevel, 1, 3);
-                            let wpDamage = copy_item.data.damage.parts[0][0];
-                            let verDamage = copy_item.data.damage.versatile;
+                            const itemId = $("input[type='radio'][name='weapon']:checked").val();
+                            const weaponItem = actor.items.get(itemId);
+                            const copy_item = duplicate(weaponItem);
+                            const spellLevel = Math.floor(DAEItem.data.level / 2);
+                            const bonus = value_limit(spellLevel, 1, 3);
+                            const wpDamage = copy_item.data.damage.parts[0][0];
+                            const verDamage = copy_item.data.damage.versatile;
                             await DAE.setFlag(actor, `magicWeapon`, {
                                 damage: weaponItem.data.data.attackBonus,
                                 weapon: itemId,
@@ -1743,9 +1755,9 @@ class MidiMacros {
 
         //Revert weapon and unset flag.
         if (args[0] === "off") {
-            let { damage, weapon, weaponDmg, verDmg, mgc } = DAE.getFlag(actor, 'magicWeapon');
-            let weaponItem = actor.items.get(weapon);
-            let copy_item = duplicate(weaponItem);
+            const { damage, weapon, weaponDmg, verDmg, mgc } = DAE.getFlag(actor, 'magicWeapon');
+            const weaponItem = actor.items.get(weapon);
+            const copy_item = duplicate(weaponItem);
             copy_item.data.attackBonus = damage;
             copy_item.data.damage.parts[0][0] = weaponDmg;
             copy_item.data.properties.mgc = mgc
@@ -1756,11 +1768,11 @@ class MidiMacros {
     }
 
     static async mistyStep(args) {
-        //DAE Macro Execute, Effect Value = "Macro Name" @target 
+        //DAE Macro Execute, Effect Value = "Macro Name" @target
         if (!game.modules.get("advanced-macros")?.active) ui.notifications.error("Please enable the Advanced Macros module")
         const { actor, token, lArgs } = MidiMacros.targets(args)
         if (args[0] === "on") {
-            let range = canvas.scene.createEmbeddedDocuments("MeasuredTemplate", [{
+            const range = canvas.scene.createEmbeddedDocuments("MeasuredTemplate", [{
                 t: "circle",
                 user: game.user._id,
                 x: token.x + canvas.grid.size / 2,
@@ -1768,10 +1780,10 @@ class MidiMacros {
                 direction: 0,
                 distance: 30,
                 borderColor: "#FF0000",
-                flags: { "midi-srd": { MistyStep: { ActorId: actor.id } } }
+                flags: { "midi-items-community": { MistyStep: { ActorId: actor.id } } }
             }]);
             range.then(result => {
-                let templateData = {
+                const templateData = {
                     t: "rect",
                     user: game.user._id,
                     distance: 7.5,
@@ -1779,7 +1791,7 @@ class MidiMacros {
                     x: 0,
                     y: 0,
                     fillColor: game.user.color,
-                    flags: { "midi-srd": { MistyStep: { ActorId: actor.id } } }
+                    flags: { "midi-items-community": { MistyStep: { ActorId: actor.id } } }
                 };
                 Hooks.once("createMeasuredTemplate", deleteTemplatesAndMove);
                 MidiMacros.templateCreation(templateData, actor)
@@ -1801,7 +1813,7 @@ class MidiMacros {
         const DC = args[1]
 
         if (args[0] === "on") {
-            let range = canvas.scene.createEmbeddedDocuments("MeasuredTemplate", [{
+            const range = canvas.scene.createEmbeddedDocuments("MeasuredTemplate", [{
                 t: "circle",
                 user: game.user._id,
                 x: token.x + canvas.grid.size / 2,
@@ -1809,10 +1821,10 @@ class MidiMacros {
                 direction: 0,
                 distance: 60,
                 borderColor: "#517bc9",
-                flags: { "midi-srd": { MoonbeamRange: { ActorId: actor.id } } }
+                flags: { "midi-items-community": { MoonbeamRange: { ActorId: actor.id } } }
             }]);
             range.then(result => {
-                let templateData = {
+                const templateData = {
                     t: "circle",
                     user: game.user._id,
                     distance: 5,
@@ -1820,14 +1832,14 @@ class MidiMacros {
                     x: 0,
                     y: 0,
                     flags: {
-                        "midi-srd": { Moonbeam: { ActorId: actor.id } }
+                        "midi-items-community": { Moonbeam: { ActorId: actor.id } }
                     },
                     fillColor: game.user.color
                 }
                 Hooks.once("createMeasuredTemplate", MidiMacros.deleteTemplates("MoonbeamRange", actor));
                 MidiMacros.templateCreation(templateData, actor)
             })
-            let damage = DAEItem.data.level;
+            const damage = DAEItem.data.level;
             await actor.createEmbeddedDocuments("Item",
                 [{
                     "name": "Moonbeam repeating",
@@ -1857,7 +1869,7 @@ class MidiMacros {
                         },
 
                     },
-                    "flags": { "midi-srd": { "Moonbeam": { "ActorId": actor.id } } },
+                    "flags": { "midi-items-community": { "Moonbeam": { "ActorId": actor.id } } },
                     "img": DAEItem.img,
                     "effects": []
                 }]
@@ -1872,7 +1884,7 @@ class MidiMacros {
 
     static async protectionFromEnergy(args) {
         const { actor, token, lArgs } = MidiMacros.targets(args)
-        let content = `
+        const content = `
     <form class="protEnergy">
             <div class="form-group" id="types">
               <label class="radio-label">
@@ -1913,8 +1925,8 @@ class MidiMacros {
                         icon: '<i class="fas fa-check"></i>',
                         label: 'Yes',
                         callback: async (html) => {
-                            let element = $("input[type='radio'][name='type']:checked").val();
-                            let resistances = actor.data.data.traits.dr.value;
+                            const element = $("input[type='radio'][name='type']:checked").val();
+                            const resistances = actor.data.data.traits.dr.value;
                             resistances.push(element);
                             await actor.update({ "data.traits.dr.value": resistances });
                             await DAE.setFlag(actor, 'ProtectionFromEnergy', element);
@@ -1925,8 +1937,8 @@ class MidiMacros {
             }).render(true, { width: 400 });
         }
         if (args[0] === "off") {
-            let element = DAE.getFlag(actor, 'ProtectionFromEnergy');
-            let resistances = actor.data.data.traits.dr.value;
+            const element = DAE.getFlag(actor, 'ProtectionFromEnergy');
+            const resistances = actor.data.data.traits.dr.value;
             const index = resistances.indexOf(element);
             resistances.splice(index, 1);
             await actor.update({ "data.traits.dr.value": resistances });
@@ -1938,17 +1950,17 @@ class MidiMacros {
     static async rayOfEnfeeblement(args) {
         if (!game.modules.get("advanced-macros")?.active) ui.notifications.error("Please enable the Advanced Macros module")
         const { actor, token, lArgs } = MidiMacros.targets(args)
-        let weapons = actor.items.filter(i => i.data.type === `weapon`);
+        const weapons = actor.items.filter(i => i.data.type === `weapon`);
 
         /**
          * For every str weapon, update the damage formulas to half the damage, set flag of original
          */
         if (args[0] === "on") {
-            for (let weapon of weapons) {
+            for (const weapon of weapons) {
                 if (weapon.abilityMod === "str") {
-                    let newWeaponParts = duplicate(weapon.data.data.damage.parts);
+                    const newWeaponParts = duplicate(weapon.data.data.damage.parts);
                     await weapon.setFlag('world', 'RayOfEnfeeblement', newWeaponParts);
-                    for (let part of weapon.data.data.damage.parts) {
+                    for (const part of weapon.data.data.damage.parts) {
                         part[0] = `floor((${part[0]})/2)`;
                     }
                     await weapon.update({ "data.damage.parts": weapon.data.data.damage.parts });
@@ -1958,8 +1970,8 @@ class MidiMacros {
 
         // Update weapons to old value
         if (args[0] === "off") {
-            for (let weapon of weapons) {
-                let parts = weapon.getFlag('world', 'RayOfEnfeeblement');
+            for (const weapon of weapons) {
+                const parts = weapon.getFlag('world', 'RayOfEnfeeblement');
                 await weapon.update({ "data.damage.parts": parts });
             }
         }
@@ -1974,10 +1986,10 @@ class MidiMacros {
 
             // If 6s elapses, update HP by one
             const timeHookId = Hooks.on("updateWorldTime", async (currentTime, updateInterval) => {
-                let effect = actor.effects.find(i => i.data.label === "Regenerate");
-                let applyTime = effect.data.duration.startTime;
-                let expireTime = applyTime + effect.data.duration.seconds;
-                let healing = roundCount(currentTime, updateInterval, applyTime, expireTime);
+                const effect = actor.effects.find(i => i.data.label === "Regenerate");
+                const applyTime = effect.data.duration.startTime;
+                const expireTime = applyTime + effect.data.duration.seconds;
+                const healing = roundCount(currentTime, updateInterval, applyTime, expireTime);
                 await actor.applyDamage(-healing);
                 await ChatMessage.create({ content: `${actor.name} gains 1 hp` });
             }
@@ -1991,7 +2003,7 @@ class MidiMacros {
 
         if (args[0] === "off") {
             async function RegenerateOff() {
-                let flag = await actor.getFlag('world', 'Regenerate');
+                const flag = await actor.getFlag('world', 'Regenerate');
                 Hooks.off("updateWorldTime", flag.timeHook);
                 await actor.unsetFlag("world", "Regenerate");
                 console.log("Regenerate removed");
@@ -2001,7 +2013,7 @@ class MidiMacros {
 
 
         /**
-         * 
+         *
          * @param {Number} currentTime current world time
          * @param {Number} updateInterval amount the world time was incremented
          * @param {Number} applyTime time the effect was applied
@@ -2010,20 +2022,20 @@ class MidiMacros {
         function roundCount(currentTime, updateInterval, applyTime, expireTime) {
             // Don't count time before applyTime
             if (currentTime - updateInterval < applyTime) {
-                let offset = applyTime - (currentTime - updateInterval);
+                const offset = applyTime - (currentTime - updateInterval);
                 updateInterval -= offset;
             }
             await
             // Don't count time after expireTime
             if (currentTime > expireTime) {
-                let offset = currentTime - expireTime;
+                const offset = currentTime - expireTime;
                 currentTime = expireTime;
                 updateInterval -= offset;
             }
 
-            let sTime = currentTime - updateInterval;
-            let fRound = sTime + 6 - (sTime % 6); // Time of the first round
-            let lRound = currentTime - (currentTime % 6); // Time of the last round
+            const sTime = currentTime - updateInterval;
+            const fRound = sTime + 6 - (sTime % 6); // Time of the first round
+            const lRound = currentTime - (currentTime % 6); // Time of the last round
             let roundCount = 0;
             if (lRound >= fRound)
                 roundCount = (lRound - fRound) / 6 + 1;
@@ -2107,9 +2119,9 @@ class MidiMacros {
         const { actor, token, lArgs } = MidiMacros.targets(args)
         const castingItem = lArgs.efData.flags.dae.itemData
         if (args[0] === "on") {
-            let damage = Math.floor(Math.floor(args[1] / 2));
-            let image = castingItem.img;
-            let range = canvas.scene.createEmbeddedDocuments("MeasuredTemplate", [{
+            const damage = Math.floor(Math.floor(args[1] / 2));
+            const image = castingItem.img;
+            const range = canvas.scene.createEmbeddedDocuments("MeasuredTemplate", [{
                 t: "circle",
                 user: game.user._id,
                 x: token.x + canvas.grid.size / 2,
@@ -2117,10 +2129,10 @@ class MidiMacros {
                 direction: 0,
                 distance: 60,
                 borderColor: "#FF0000",
-                flags: { "midi-srd": { SpiritualWeaponRange: { ActorId: actor.id } } }
+                flags: { "midi-items-community": { SpiritualWeaponRange: { ActorId: actor.id } } }
             }]);
             range.then(result => {
-                let templateData = {
+                const templateData = {
                     t: "rect",
                     user: game.user._id,
                     distance: 7,
@@ -2128,7 +2140,7 @@ class MidiMacros {
                     texture: texture || "",
                     x: 0,
                     y: 0,
-                    flags: { "midi-srd": { SpiritualWeapon: { ActorId: actor.id } } },
+                    flags: { "midi-items-community": { SpiritualWeapon: { ActorId: actor.id } } },
                     fillColor: game.user.color
                 }
                 Hooks.once("createMeasuredTemplate", MidiMacros.deleteTemplates("SpiritualWeaponRange", actor));
@@ -2164,7 +2176,7 @@ class MidiMacros {
                         "weaponType": "simpleM",
                         "proficient": true
                     },
-                    "flags": { "midi-srd": { "SpiritualWeapon": actor.id } },
+                    "flags": { "midi-items-community": { "SpiritualWeapon": actor.id } },
                     "img": `${image}`,
                     "effects": []
                 }],
@@ -2180,9 +2192,9 @@ class MidiMacros {
     static async unseenServant(args, texture) {
         if (!game.modules.get("warpgate")?.active) ui.notifications.error("Please enable the Warp Gate module")
         const { actor, token, lArgs } = MidiMacros.targets(args)
-        if (!game.actors.getName("MidiSRD")) { await Actor.create({ name: "MidiSRD", type: "npc" }) }
+        if (!game.actors.getName(CONSTANTS.MODULE_NAME)) { await Actor.create({ name: CONSTANTS.MODULE_NAME, type: "npc" }) }
         texture = texture || lArgs.item.img
-        let updates = {
+        const updates = {
             token: {
                 "name": "Unseen Servant", "img": texture
             },
@@ -2192,16 +2204,16 @@ class MidiMacros {
                 "data.abilities.str.value" : 2
             }
         }
-        let { x, y } = await MidiMacros.warpgateCrosshairs(token, 60, "Unseen Servant", texture, {}, -1)
+        const { x, y } = await MidiMacros.warpgateCrosshairs(token, 60, "Unseen Servant", texture, {}, -1)
 
-        await warpgate.spawnAt({ x, y }, "MidiSRD", updates, { controllingActor: actor },);
+        await warpgate.spawnAt({ x, y }, CONSTANTS.MODULE_NAME, updates, { controllingActor: actor },);
 
     }
     static async wardingBond(args) {
         //DAE Macro Execute, Effect Value = "Macro Name" @target @item
         const { actor, token, lArgs } = MidiMacros.targets(args)
         const DAEItem = lArgs.efData.flags.dae.itemData
-        let caster = canvas.tokens.placeables.find(token => token?.actor?.items.get(DAEItem._id) != null)
+        const caster = canvas.tokens.placeables.find(token => token?.actor?.items.get(DAEItem._id) != null)
         if (args[0] === "on") {
             await DAE.setFlag(actor, "WardingBondIds", {
                 tokenID: actor.id,
@@ -2212,14 +2224,14 @@ class MidiMacros {
 
         async function SetWardingBondHook(token) {
             const hookId = Hooks.on("preUpdateActor", async (actor, update) => {
-                let flag = await DAE.getFlag(actor, "WardingBondIds")
+                const flag = await DAE.getFlag(actor, "WardingBondIds")
                 if (flag.tokenID !== actor.id) return
                 if (!"actorData.data.attributes.hp" in update) return;
-                let oldHP = actor.data.data.attributes.hp.value;
-                let newHP = getProperty(update, "data.attributes.hp.value");
-                let hpChange = oldHP - newHP
+                const oldHP = actor.data.data.attributes.hp.value;
+                const newHP = getProperty(update, "data.attributes.hp.value");
+                const hpChange = oldHP - newHP
                 if (hpChange > 0 && typeof hpChange === "number") {
-                    let caster = game.actors.get(flag.casterID).getActiveTokens()[0]
+                    const caster = game.actors.get(flag.casterID).getActiveTokens()[0]
                     caster.actor.applyDamage(hpChange)
                 }
             })
@@ -2227,7 +2239,7 @@ class MidiMacros {
         }
 
         async function RemoveHook() {
-            let flag = await DAE.getFlag(actor, 'WardingBondHook');
+            const flag = await DAE.getFlag(actor, 'WardingBondHook');
             Hooks.off("preUpdateActor", flag);
             await DAE.unsetFlag(actor, "WardingBondHook");
         }
