@@ -1,10 +1,20 @@
 {
-  "name": "midi-items-community",
-  "title": "Midi Items Collection",
-  "description": "DnD 5e items, features and spells configured for Dynamic Active Effects and Midi QoL",
+  "name": "foundry-vtt-community-variant",
+  "title": "Foundry Community Macro Collection",
+  "description": "Macros for items, features and spells configured for may effects has Dynamic Active Effects, Midi QoL and others modules",
   "version": "0.3.0",
-  "author": "p4535992",
   "authors": [
+    {
+        "name": "kandashi",
+        "url": "https://github.com/kandashi",
+        "discord": "",
+        "twitter": "",
+        "patreon": "",
+        "github": "kandashi",
+        "ko-fi": "",
+        "reddit": "",
+        "email": ""
+    },
     {
       "name": "p4535992",
       "url": "https://github.com/p4535992",
@@ -22,6 +32,7 @@
   "includes": [
     "./assets/**",
     "./lang/**",
+    "./languages/**",
     "./scripts/**",
     "./styles/**",
     "./templates/**",
@@ -48,7 +59,7 @@
     {
       "lang": "en",
       "name": "English",
-      "path": "lang/en.json"
+      "path": "languages/en.json"
     }
   ],
   "scripts": [],
