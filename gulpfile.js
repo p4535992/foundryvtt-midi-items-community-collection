@@ -110,7 +110,7 @@ const Datastore = require("@seald-io/nedb");
  exports.gulpPackContent = gulpPackContent;
 
  const importDocumentsToDb = async function () {
-     const compendiums = ["5e"]; // TODO add all folders
+     const compendiums = ["dnd5e"]; // TODO add all folders
      for (const comp of compendiums) {
          const db = new Datastore({ filename: `./dist/packs/macros-${comp}.db` });
 
@@ -120,9 +120,11 @@ const Datastore = require("@seald-io/nedb");
                  throw error;
              }
              console.log("INFO: local database loaded successfully.");
+             // TODO find a better method for the path...
+             const regexPathToCheck = `./dist/packs/${comp}/generic/*.js`
 
-             console.log(`./dist/packs/${comp}/*.js`);
-             glob(`./dist/packs/${comp}/*.js`, function (err, files) {
+             console.log(regexPathToCheck);
+             glob(regexPathToCheck, function (err, files) {
                  // read the folder or folders if you want: example json/**/*.json
                  console.log("Files : " + files.length);
                  if (err) {

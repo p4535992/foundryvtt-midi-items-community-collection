@@ -175,14 +175,14 @@ export class MidiMacros {
 		const { actor, token, lArgs } = MidiMacros.targets(args);
 		const buf = (parseInt(args[1]) - 1) * 5;
 		//@ts-ignore
-		const curHP = actor.data.data.attributes.hp.value;
+		const curHP = actor.system.attributes.hp.value;
 		//@ts-ignore
-		const curMax = actor.data.data.attributes.hp.max;
+		const curMax = actor.system.attributes.hp.max;
 
 		if (args[0] === "on") {
-			await actor.update({ "data.attributes.hp.value": curHP + buf });
+			await actor.update({ "system.attributes.hp.value": curHP + buf });
 		} else if (curHP > curMax) {
-			await actor.update({ "data.attributes.hp.value": curMax });
+			await actor.update({ "system.attributes.hp.value": curMax });
 		}
 	}
 
@@ -204,9 +204,9 @@ export class MidiMacros {
 							}
 							const copy_item = duplicate(DAEitem);
 							//@ts-ignore
-							await DAE.setFlag(actor, "AlterSelfSpell", copy_item.data.damage.parts[0][0]); //set flag of previous value
+							await DAE.setFlag(actor, "AlterSelfSpell", copy_item.system.damage.parts[0][0]); //set flag of previous value
 							//@ts-ignore
-							copy_item.data.damage.parts[0][0] = "1d6 +@mod"; //replace with new value
+							copy_item.system.damage.parts[0][0] = "1d6 +@mod"; //replace with new value
 							await await actor.updateEmbeddedDocuments("Item", [copy_item]); //update item
 							await ChatMessage.create({ content: "Unarmed strike is altered" });
 						},
@@ -224,7 +224,7 @@ export class MidiMacros {
 			if (!DAEitem) return;
 			const copy_item = duplicate(DAEitem);
 			//@ts-ignore
-			copy_item.data.damage.parts[0][0] = damage; //replace with old value
+			copy_item.system.damage.parts[0][0] = damage; //replace with old value
 			await await actor.updateEmbeddedDocuments("Item", [copy_item]); //update item
 			//@ts-ignore
 			await DAE.unsetFlag(actor, "world", "AlterSelfSpell"); //remove flag
@@ -314,11 +314,11 @@ export class MidiMacros {
 			const sourceItem = <Item>await fromUuid(lArgs.origin);
 			texture = texture || <string>sourceItem.img;
 			//@ts-ignore
-			const summonerDc = actor.data.data.attributes.spelldc;
+			const summonerDc = actor.system.attributes.spelldc;
 			const summonerAttack = summonerDc - 8;
 			const summonerMod = getProperty(
 				actor,
-				`data.data.abilities.${getProperty(actor, "data.data.attributes.spellcasting")}.mod`
+				`system.abilities.${getProperty(actor, "system.attributes.spellcasting")}.mod`
 			);
 			let fistScale = "";
 			let graspScale = "";
@@ -339,20 +339,20 @@ export class MidiMacros {
 				actor: {
 					name: "Arcane Hand",
 					//@ts-ignore
-					"data.attributes.hp": {
-						value: actor.data.data.attributes.hp.max,
-						max: actor.data.data.attributes.hp.max,
+					"system.attributes.hp": {
+						value: actor.system.attributes.hp.max,
+						max: actor.system.attributes.hp.max,
 					},
 				},
 				embedded: {
 					Item: {
 						"Clenched Fist": {
-							"data.attackBonus": `- @mod - @prof + ${summonerAttack}`,
-							"data.damage.parts": [[`4d8 ${fistScale}`, "force"]],
+							"system.attackBonus": `- @mod - @prof + ${summonerAttack}`,
+							"system.damage.parts": [[`4d8 ${fistScale}`, "force"]],
 							type: "weapon",
 						},
 						"Grasping Hand": {
-							"data.damage.parts": [[`2d6 ${graspScale} + ${summonerMod}`, "bludgeoning"]],
+							"system.damage.parts": [[`2d6 ${graspScale} + ${summonerMod}`, "bludgeoning"]],
 							type: "weapon",
 						},
 					},
@@ -1056,7 +1056,7 @@ export class MidiMacros {
 
 		async function DivineWordApply(actor, targetHp) {
 			if (targetHp <= 20) {
-				await actor.update({ "data.attributes.hp.value": 0 });
+				await actor.update({ "system.attributes.hp.value": 0 });
 			} else {
 				if (targetHp <= 30) {
 					//if (!hasStunned) {
@@ -1092,7 +1092,7 @@ export class MidiMacros {
 		}
 		if (args[0] === "on") {
 			//@ts-ignore
-			DivineWordApply(actor, token.actor.data.data.attributes.hp.value);
+			DivineWordApply(actor, token.actor.system.attributes.hp.value);
 		}
 	}
 
@@ -1123,7 +1123,7 @@ export class MidiMacros {
 							};
 							await effect.update({ changes });
 							await ChatMessage.create({ content: `${actor.name} gains ${amount} temp Hp` });
-							await actor.update({ "data.attributes.hp.temp": amount });
+							await actor.update({ "system.attributes.hp.temp": amount });
 						},
 					},
 					two: {
@@ -1245,7 +1245,7 @@ export class MidiMacros {
 		if (token) {
 			const originalSize = token.data.width;
 			//@ts-ignore
-			const mwak = actor.data.data.bonuses.mwak.damage;
+			const mwak = actor.system.bonuses.mwak.damage;
 
 			if (args[0] === "on") {
 				new Dialog({
@@ -1487,7 +1487,7 @@ export class MidiMacros {
 						label: "Warm",
 						callback: async () => {
 							//@ts-ignore
-							const resistances = duplicate(actor.data.data.traits.dr.value);
+							const resistances = duplicate(actor.system.traits.dr.value);
 							resistances.push("cold");
 							await actor.update({ "data.traits.dr.value": resistances });
 							//@ts-ignore
@@ -1521,7 +1521,7 @@ export class MidiMacros {
 						label: "Cold",
 						callback: async () => {
 							//@ts-ignore
-							const resistances = duplicate(actor.data.data.traits.dr.value);
+							const resistances = duplicate(actor.system.traits.dr.value);
 							resistances.push("fire");
 							await actor.update({ "data.traits.dr.value": resistances });
 							//@ts-ignore
@@ -1559,13 +1559,14 @@ export class MidiMacros {
 			//@ts-ignore
 			const element = DAE.getFlag(actor, "FireShield");
 			//@ts-ignore
-			const resistances = actor.data.data.traits.dr.value;
+			const resistances = actor.system.traits.dr.value;
 			const index = resistances.indexOf(element);
 			resistances.splice(index, 1);
 			await actor.update({ "data.traits.dr.value": resistances });
 			await ChatMessage.create({ content: "Fire Shield expires on " + actor.name });
 			//@ts-ignore
 			await DAE.unsetFlag(actor, "FireShield");
+            //@ts-ignore
 			await actor.deleteEmbeddedDocuments("Item", [item.id]);
 		}
 	}
@@ -1823,8 +1824,9 @@ export class MidiMacros {
 			await ChatMessage.create({ content: "Heroism ends" });
 		}
 		if (args[0] === "each") {
-			const bonus = mod > actor.data.data.attributes.hp.temp ? mod : actor.data.data.attributes.hp.temp;
-			await actor.update({ "data.attributes.hp.temp": mod });
+            //@ts-ignore
+			const bonus = mod > actor.system.attributes.hp.temp ? mod : actor.system.attributes.hp.temp;
+			await actor.update({ "system.attributes.hp.temp": mod });
 			await ChatMessage.create({ content: "Heroism continues on " + actor.name });
 		}
 	}
@@ -1834,21 +1836,31 @@ export class MidiMacros {
 		const DAEItem = lArgs.efData.flags.dae.itemData;
 		const saveData = DAEItem.data.save;
 
-		const caster = canvas.tokens.placeables.find((token) => token?.actor?.items.get(DAEItem._id) != null);
+		const caster = canvas.tokens?.placeables?.find((token) => token?.actor?.items.get(DAEItem._id) != null);
 
 		if (args[0] === "on") {
-			if (actor.data.data.abilities.int.value < 4) actor.deleteEmbeddedEntity("ActiveEffect", lArgs.efData._id);
+            //@ts-ignore
+			if (actor.system.abilities.int.value < 4) {
+                //@ts-ignore
+                actor.deleteEmbeddedEntity("ActiveEffect", lArgs.efData._id);
+            }
+            //@ts-ignore
 			RollHideousSave(target);
 		}
 
 		async function RollHideousSave(target) {
 			console.log("SetHook");
+            //@ts-ignore
 			const hookId = Hooks.on("preUpdateActor", async (actor, update) => {
-				if (!"actorData.data.attributes.hp" in update) return;
-				const oldHP = actor.data.data.attributes.hp.value;
-				const newHP = getProperty(update, "data.attributes.hp.value");
+                //@ts-ignore
+				if (!"actorData.system.attributes.hp" in update) {
+                    return;
+                }
+				const oldHP = actor.system.attributes.hp.value;
+				const newHP = getProperty(update, "system.attributes.hp.value");
 				const hpChange = oldHP - newHP;
 				if (hpChange > 0 && typeof hpChange === "number") {
+                    //@ts-ignore
 					const flavor = `${CONFIG.DND5E.abilities["wis"]} DC${saveData.dc} ${DAEItem?.name || ""}`;
 					const saveRoll = (
 						await actor.rollAbilitySave(saveData.ability, { flavor, fastForward: true, advantage: true })
@@ -1858,20 +1870,29 @@ export class MidiMacros {
 				}
 			});
 			if (args[0] !== "on") {
+                //@ts-ignore
 				const flavor = `${CONFIG.DND5E.abilities["wis"]} DC${saveData.dc} ${DAEItem?.name || ""}`;
+                //@ts-ignore
 				const saveRoll = (await actor.rollAbilitySave(saveData.ability, { flavor })).total;
 				if (saveRoll >= saveData.dc) {
 					actor.deleteEmbeddedDocuments("ActiveEffect", [lArgs.efData._id]);
 				}
 			}
+            //@ts-ignore
 			await DAE.setFlag(actor, "hideousLaughterHook", hookId);
 		}
 
 		async function RemoveHook() {
+            //@ts-ignore
 			const flag = await DAE.getFlag(actor, "hideousLaughterHook");
 			Hooks.off("preUpdateActor", flag);
+            //@ts-ignore
 			await DAE.unsetFlag(actor, "hideousLaughterHook");
-			if (args[0] === "off") game.cub.addCondition("Prone", actor);
+            //@ts-ignore
+			if (args[0] === "off") {
+                //@ts-ignore
+                game.cub.addCondition("Prone", actor);
+            }
 		}
 
 		if (args[0] === "off") {
@@ -1880,6 +1901,7 @@ export class MidiMacros {
 
 		if (args[0] === "each") {
 			await RemoveHook();
+            //@ts-ignore
 			await RollHideousSave();
 		}
 	}
@@ -1889,15 +1911,18 @@ export class MidiMacros {
 		const DAEItem = lArgs.efData.flags.dae.itemData;
 		const saveData = DAEItem.data.save;
 		const DC = args[1];
-
+        //@ts-ignore
 		if (args[0] === "each") {
+            //@ts-ignore
 			new Dialog({
 				title: "Use action to make a wisdom save to end Irresistible Dance?",
 				buttons: {
 					one: {
 						label: "Yes",
 						callback: async () => {
+                            //@ts-ignore
 							const flavor = `${CONFIG.DND5E.abilities[saveData.ability]} DC${DC} ${DAEItem?.name || ""}`;
+                            //@ts-ignore
 							const saveRoll = (await actor.rollAbilitySave(saveData.ability, { flavor })).total;
 
 							if (saveRoll >= DC) {
@@ -1922,11 +1947,15 @@ export class MidiMacros {
 			ui.notifications.error("Please enable the Advanced Macros module");
 		const { actor, token, lArgs } = MidiMacros.targets(args);
 		if (args[0] === "on") {
+            //@ts-ignore
 			await ChatMessage.create({ content: `${token.name} is levitated 20ft` });
+            //@ts-ignore
 			await token.document.update({ elevation: 20 });
 		}
 		if (args[0] === "off") {
+            //@ts-ignore
 			await token.document.update({ elevation: 0 });
+            //@ts-ignore
 			await ChatMessage.create({ content: `${token.name} is returned to the ground` });
 		}
 	}
@@ -1962,33 +1991,47 @@ export class MidiMacros {
                 </div>
                 </form>
                 `;
-
+            //@ts-ignore
 			new Dialog({
 				content,
 				buttons: {
 					Ok: {
 						label: `Ok`,
 						callback: async (html) => {
-							const itemId = $("input[type='radio'][name='weapon']:checked").val();
+							const itemId = <string>$("input[type='radio'][name='weapon']:checked").val();
 							const weaponItem = actor.items.get(itemId);
 							const copy_item = duplicate(weaponItem);
 							const spellLevel = Math.floor(DAEItem.data.level / 2);
 							const bonus = value_limit(spellLevel, 1, 3);
-							const wpDamage = copy_item.data.damage.parts[0][0];
-							const verDamage = copy_item.data.damage.versatile;
+                            //@ts-ignore
+							const wpDamage = copy_item.system.damage.parts[0][0];
+                            //@ts-ignore
+							const verDamage = copy_item.system.damage.versatile;
+                            //@ts-ignore
 							await DAE.setFlag(actor, `magicWeapon`, {
-								damage: weaponItem.data.data.attackBonus,
+                                //@ts-ignore
+								damage: weaponItem.system.attackBonus,
 								weapon: itemId,
 								weaponDmg: wpDamage,
 								verDmg: verDamage,
-								mgc: copy_item.data.properties.mgc,
+                                //@ts-ignore
+								mgc: copy_item.system.properties.mgc,
 							});
-							if (copy_item.data.attackBonus === "") copy_item.data.attackBonus = "0";
-							copy_item.data.attackBonus = `${parseInt(copy_item.data.attackBonus) + bonus}`;
-							copy_item.data.damage.parts[0][0] = wpDamage + " + " + bonus;
-							copy_item.data.properties.mgc = true;
-							if (verDamage !== "" && verDamage !== null)
-								copy_item.data.damage.versatile = verDamage + " + " + bonus;
+                            //@ts-ignore
+							if (copy_item.system.attackBonus === "") {
+                                //@ts-ignore
+                                copy_item.system.attackBonus = "0";
+                            }
+                            //@ts-ignore
+							copy_item.system.attackBonus = `${parseInt(copy_item.system.attackBonus) + bonus}`;
+                            //@ts-ignore
+							copy_item.system.damage.parts[0][0] = wpDamage + " + " + bonus;
+                            //@ts-ignore
+							copy_item.system.properties.mgc = true;
+							if (verDamage !== "" && verDamage !== null){
+                                //@ts-ignore
+								copy_item.system.damage.versatile = verDamage + " + " + bonus;
+                            }
 							await actor.updateEmbeddedDocuments("Item", [copy_item]);
 						},
 					},
@@ -2001,14 +2044,22 @@ export class MidiMacros {
 
 		//Revert weapon and unset flag.
 		if (args[0] === "off") {
+            //@ts-ignore
 			const { damage, weapon, weaponDmg, verDmg, mgc } = DAE.getFlag(actor, "magicWeapon");
 			const weaponItem = actor.items.get(weapon);
 			const copy_item = duplicate(weaponItem);
-			copy_item.data.attackBonus = damage;
-			copy_item.data.damage.parts[0][0] = weaponDmg;
-			copy_item.data.properties.mgc = mgc;
-			if (verDmg !== "" && verDmg !== null) copy_item.data.damage.versatile = verDmg;
+            //@ts-ignore
+			copy_item.system.attackBonus = damage;
+            //@ts-ignore
+			copy_item.system.damage.parts[0][0] = weaponDmg;
+            //@ts-ignore
+			copy_item.system.properties.mgc = mgc;
+			if (verDmg !== "" && verDmg !== null) {
+                //@ts-ignore
+                copy_item.system.damage.versatile = verDmg;
+            }
 			await actor.updateEmbeddedDocuments("Item", [copy_item]);
+            //@ts-ignore
 			await DAE.unsetFlag(actor, `magicWeapon`);
 		}
 	}
@@ -2019,22 +2070,24 @@ export class MidiMacros {
 			ui.notifications.error("Please enable the Advanced Macros module");
 		const { actor, token, lArgs } = MidiMacros.targets(args);
 		if (args[0] === "on") {
-			const range = canvas.scene.createEmbeddedDocuments("MeasuredTemplate", [
+			const range = canvas.scene?.createEmbeddedDocuments("MeasuredTemplate", [
 				{
 					t: "circle",
-					user: game.user?._id,
-					x: token.x + canvas.grid.size / 2,
-					y: token.y + canvas.grid.size / 2,
+					user: game.user?.id,
+                    //@ts-ignore
+					x: token.x + <number>canvas.grid?.size / 2,
+                    //@ts-ignore
+					y: token.y + <number>canvas.grid?.size / 2,
 					direction: 0,
 					distance: 30,
 					borderColor: "#FF0000",
 					flags: { "midi-items-community": { MistyStep: { ActorId: actor.id } } },
 				},
 			]);
-			range.then((result) => {
+			range?.then((result) => {
 				const templateData = {
 					t: "rect",
-					user: game.user?._id,
+					user: game.user?.id,
 					distance: 7.5,
 					direction: 45,
 					x: 0,
@@ -2046,7 +2099,8 @@ export class MidiMacros {
 				MidiMacros.templateCreation(templateData, actor);
 				async function deleteTemplatesAndMove(template) {
 					MidiMacros.deleteTemplates("MistyStep", actor);
-					await token.document.update({ x: template.data.x, y: template.data.y }, { animate: false });
+                    //@ts-ignore
+					await token?.document.update({ x: template.data.x, y: template.data.y }, { animate: false });
 					await actor.deleteEmbeddedDocuments("ActiveEffect", [lArgs.effectId]);
 				}
 			});
@@ -2063,11 +2117,13 @@ export class MidiMacros {
 		const DC = args[1];
 
 		if (args[0] === "on") {
-			const range = canvas.scene.createEmbeddedDocuments("MeasuredTemplate", [
+			const range = canvas.scene?.createEmbeddedDocuments("MeasuredTemplate", [
 				{
 					t: "circle",
-					user: game.user?._id,
+					user: game.user?.id,
+                    //@ts-ignore
 					x: token.x + canvas.grid.size / 2,
+                    //@ts-ignore
 					y: token.y + canvas.grid.size / 2,
 					direction: 0,
 					distance: 60,
@@ -2075,10 +2131,10 @@ export class MidiMacros {
 					flags: { "midi-items-community": { MoonbeamRange: { ActorId: actor.id } } },
 				},
 			]);
-			range.then((result) => {
+			range?.then((result) => {
 				const templateData = {
 					t: "circle",
-					user: game.user?._id,
+					user: game.user?.id,
 					distance: 5,
 					direction: 0,
 					x: 0,
@@ -2088,6 +2144,7 @@ export class MidiMacros {
 					},
 					fillColor: game.user?.color,
 				};
+                //@ts-ignore
 				Hooks.once("createMeasuredTemplate", MidiMacros.deleteTemplates("MoonbeamRange", actor));
 				MidiMacros.templateCreation(templateData, actor);
 			});
@@ -2176,9 +2233,11 @@ export class MidiMacros {
 						label: "Yes",
 						callback: async (html) => {
 							const element = $("input[type='radio'][name='type']:checked").val();
-							const resistances = actor.data.data.traits.dr.value;
+                            //@ts-ignore
+							const resistances = actor.system.traits.dr.value;
 							resistances.push(element);
 							await actor.update({ "data.traits.dr.value": resistances });
+                            //@ts-ignore
 							await DAE.setFlag(actor, "ProtectionFromEnergy", element);
 							await ChatMessage.create({ content: `${actor.name} gains resistance to ${element}` });
 						},
@@ -2187,11 +2246,14 @@ export class MidiMacros {
 			}).render(true, { width: 400 });
 		}
 		if (args[0] === "off") {
+            //@ts-ignore
 			const element = DAE.getFlag(actor, "ProtectionFromEnergy");
-			const resistances = actor.data.data.traits.dr.value;
+            //@ts-ignore
+			const resistances = actor.system.traits.dr.value;
 			const index = resistances.indexOf(element);
 			resistances.splice(index, 1);
 			await actor.update({ "data.traits.dr.value": resistances });
+            //@ts-ignore
 			await DAE.unsetFlag(actor, "ProtectionFromEnergy");
 			await ChatMessage.create({ content: `${actor.name} loses resistance to ${element}` });
 		}
@@ -2207,14 +2269,18 @@ export class MidiMacros {
 		 * For every str weapon, update the damage formulas to half the damage, set flag of original
 		 */
 		if (args[0] === "on") {
+            //@ts-ignore
 			for (const weapon of weapons) {
 				if (weapon.abilityMod === "str") {
-					const newWeaponParts = duplicate(weapon.data.data.damage.parts);
+                    //@ts-ignore
+					const newWeaponParts = duplicate(weapon.system.damage.parts);
 					await weapon.setFlag("world", "RayOfEnfeeblement", newWeaponParts);
-					for (const part of weapon.data.data.damage.parts) {
+                    //@ts-ignore
+					for (const part of weapon.system.damage.parts) {
 						part[0] = `floor((${part[0]})/2)`;
 					}
-					await weapon.update({ "data.damage.parts": weapon.data.data.damage.parts });
+                    //@ts-ignore
+					await weapon.update({ "system.damage.parts": weapon.system.damage.parts });
 				}
 			}
 		}
@@ -2223,7 +2289,7 @@ export class MidiMacros {
 		if (args[0] === "off") {
 			for (const weapon of weapons) {
 				const parts = weapon.getFlag("world", "RayOfEnfeeblement");
-				await weapon.update({ "data.damage.parts": parts });
+				await weapon.update({ "system.damage.parts": parts });
 			}
 		}
 	}
@@ -2237,9 +2303,12 @@ export class MidiMacros {
 			// If 6s elapses, update HP by one
 			const timeHookId = Hooks.on("updateWorldTime", async (currentTime, updateInterval) => {
 				const effect = actor.effects.find((i) => i.data.label === "Regenerate");
+                //@ts-ignore
 				const applyTime = effect.data.duration.startTime;
+                //@ts-ignore
 				const expireTime = applyTime + effect.data.duration.seconds;
 				const healing = roundCount(currentTime, updateInterval, applyTime, expireTime);
+                //@ts-ignore
 				await actor.applyDamage(-healing);
 				await ChatMessage.create({ content: `${actor.name} gains 1 hp` });
 			});
@@ -2252,6 +2321,7 @@ export class MidiMacros {
 		if (args[0] === "off") {
 			async function RegenerateOff() {
 				const flag = await actor.getFlag("world", "Regenerate");
+                //@ts-ignore
 				Hooks.off("updateWorldTime", flag.timeHook);
 				await actor.unsetFlag("world", "Regenerate");
 				console.log("Regenerate removed");
@@ -2272,7 +2342,7 @@ export class MidiMacros {
 				const offset = applyTime - (currentTime - updateInterval);
 				updateInterval -= offset;
 			}
-			await;
+
 			// Don't count time after expireTime
 			if (currentTime > expireTime) {
 				const offset = currentTime - expireTime;
@@ -2294,8 +2364,10 @@ export class MidiMacros {
 		const { actor, token, lArgs } = MidiMacros.targets(args);
 		// we see if the equipped weapons have base weapon set and filter on that, otherwise we just get all weapons
 		const filteredWeapons = actor.items.filter(
-			(i) =>
-				i.data.type === "weapon" && (i.data.data.baseItem === "club" || i.data.data.baseItem === "quarterstaff")
+			(i) => {
+                //@ts-ignore
+				return i.data.type === "weapon" && (i.system.baseItem === "club" || i.system.baseItem === "quarterstaff")
+            }
 		);
 		const weapons =
 			filteredWeapons.length > 0 ? filteredWeapons : actor.items.filter((i) => i.data.type === "weapon");
@@ -2319,22 +2391,34 @@ export class MidiMacros {
 					Ok: {
 						label: "Ok",
 						callback: async (html) => {
+                            //@ts-ignore
 							const itemId = html.find("[name=weapons]")[0].value;
 							const weaponItem = actor.getEmbeddedDocument("Item", itemId);
 							const weaponCopy = duplicate(weaponItem);
+                            //@ts-ignore
 							await DAE.setFlag(actor, "shillelagh", {
 								id: itemId,
+                                //@ts-ignore
 								name: weaponItem.name,
-								damage: weaponItem.data.data.damage.parts[0][0],
-								ability: weaponItem.data.data.ability,
-								magical: getProperty(weaponItem, "data.properties.mgc") || false,
+                                //@ts-ignore
+								damage: weaponItem.system.damage.parts[0][0],
+                                //@ts-ignore
+								ability: weaponItem.system.ability,
+                                //@ts-ignore
+								magical: getProperty(weaponItem, "system.properties.mgc") || false,
 							});
-							const damage = weaponCopy.data.damage.parts[0][0];
-							const targetAbilities = actor.data.data.abilities;
-							weaponCopy.data.damage.parts[0][0] = damage.replace(/1d(4|6)/g, "1d8");
-							if (targetAbilities.wis.value > targetAbilities.str.value) weaponCopy.data.ability = "wis";
+                            //@ts-ignore
+							const damage = weaponCopy.system.damage.parts[0][0];
+                            //@ts-ignore
+							const targetAbilities = actor.system.abilities;
+                            //@ts-ignore
+							weaponCopy.system.damage.parts[0][0] = damage.replace(/1d(4|6)/g, "1d8");
+							if (targetAbilities.wis.value > targetAbilities.str.value) {
+                                weaponCopy.data.ability = "wis";
+                            }
+                            //@ts-ignore
 							weaponCopy.name = weaponItem.name + " [Shillelagh]";
-							setProperty(weaponCopy, "data.properties.mgc", true);
+							setProperty(weaponCopy, "system.properties.mgc", true);
 							await actor.updateEmbeddedDocuments("Item", [weaponCopy]);
 							await ChatMessage.create({
 								content: weaponCopy.name + " is empowered by Shillelagh",
@@ -2349,14 +2433,16 @@ export class MidiMacros {
 		}
 
 		if (args[0] === "off") {
+             //@ts-ignore
 			const flag = DAE.getFlag(actor, "shillelagh");
 			const weaponItem = actor.getEmbeddedDocument("Item", flag.id);
 			const weaponCopy = duplicate(weaponItem);
-			weaponCopy.data.damage.parts[0][0] = flag.damage;
+			weaponCopy.system.damage.parts[0][0] = flag.damage;
 			weaponCopy.data.ability = flag.ability;
 			weaponCopy.name = flag.name;
-			setProperty(weaponCopy, "data.properties.mgc", flag.magical);
+			setProperty(weaponCopy, "system.properties.mgc", flag.magical);
 			await actor.updateEmbeddedDocuments("Item", [weaponCopy]);
+            //@ts-ignore
 			await DAE.unsetFlag(target, "shillelagh");
 			await ChatMessage.create({ content: weaponCopy.name + " returns to normal" });
 		}
@@ -2368,7 +2454,7 @@ export class MidiMacros {
 		if (args[0] === "on") {
 			const damage = Math.floor(Math.floor(args[1] / 2));
 			const image = castingItem.img;
-			const range = canvas.scene.createEmbeddedDocuments("MeasuredTemplate", [
+			const range = canvas.scene?.createEmbeddedDocuments("MeasuredTemplate", [
 				{
 					t: "circle",
 					user: game.user?._id,
@@ -2452,7 +2538,7 @@ export class MidiMacros {
 			},
 			actor: {
 				name: "Unseen Servant",
-				"data.attributes": { "ac.value": 10, "hp.value": 1 },
+				"system.attributes": { "ac.value": 10, "hp.value": 1 },
 				"data.abilities.str.value": 2,
 			},
 		};
@@ -2477,9 +2563,9 @@ export class MidiMacros {
 			const hookId = Hooks.on("preUpdateActor", async (actor, update) => {
 				const flag = await DAE.getFlag(actor, "WardingBondIds");
 				if (flag.tokenID !== actor.id) return;
-				if (!"actorData.data.attributes.hp" in update) return;
-				const oldHP = actor.data.data.attributes.hp.value;
-				const newHP = getProperty(update, "data.attributes.hp.value");
+				if (!"actorData.system.attributes.hp" in update) return;
+				const oldHP = actor.system.attributes.hp.value;
+				const newHP = getProperty(update, "system.attributes.hp.value");
 				const hpChange = oldHP - newHP;
 				if (hpChange > 0 && typeof hpChange === "number") {
 					const caster = game.actors?.get(flag.casterID).getActiveTokens()[0];
