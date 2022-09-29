@@ -1,0 +1,18 @@
+
+{
+    "name": "",
+    "permission":{"default":0 },
+    "type":"script",
+    "flags": {
+        "core": {
+          "sourceId": "Macro.DBlk2wFOpxxhM9eC"
+        }
+    },
+    "scope":"global",
+    "command":"",
+    "author":"",
+    "img":"icons/svg/dice-target.svg",
+    "actorIds":[]
+  }
+
+wCsoNxA9I9elUaGF
