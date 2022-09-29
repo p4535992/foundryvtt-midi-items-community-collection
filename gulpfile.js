@@ -55,6 +55,144 @@ const jest = require(`gulp-jest`).default;
 
 const argv = require(`yargs`).argv;
 
+const rename = require("gulp-rename");
+const gulpConcat = require("gulp-concat");
+const gulpJsonminify = require("gulp-jsonminify");
+const through = require("through2");
+const Datastore = require("@seald-io/nedb");
+
+ // ========================================================================
+
+ const gulpPackContent = () => {
+     return through.obj((vinylFile, _, callback) => {
+         //console.log('[1] vinylFile = ' + JSON.stringify(vinylFile));
+         const transformedFile = vinylFile.clone();
+         let fileName = transformedFile.path.substring(
+             transformedFile.path.lastIndexOf("/"),
+             transformedFile.path.lastIndexOf(".")
+         );
+         //console.log('[1] fileName = ' + fileName);
+         //let jsonFilePath = `${transformedFile.base}/${fileName}.json`;
+         let jsonFilePath = `${fileName}.json`;
+         //console.log('[2] jsonFilePath = ' + jsonFilePath);
+         const javascriptContent = new String(transformedFile.contents);
+         //console.log('[2] javascriptContent = ' + javascriptContent);
+
+         if (!fs.existsSync(jsonFilePath)) {
+             jsonFilePath = `${transformedFile.base}/generic_macro.json`;
+         }
+         let fileNameTmp = fileName;
+         if (fileNameTmp.includes("\\")) {
+             fileNameTmp = transformedFile.path.substring(
+                 transformedFile.path.lastIndexOf("\\") + 1,
+                 fileNameTmp.length
+             );
+         }
+         if (fileNameTmp.includes("/")) {
+             fileNameTmp = transformedFile.path.substring(transformedFile.path.lastIndexOf("/") + 1, fileNameTmp.length);
+         }
+         //console.log('[3] fileNameTmp = ' + fileNameTmp);
+         //console.log('[3] Read jsonFilePath = ' + jsonFilePath);
+         const file = fs.readFileSync(jsonFilePath);
+         const jsonContent = JSON.parse(file);
+         //console.log('[4] Read jsonContent = ' + JSON.stringify(jsonContent));
+         jsonContent.command = javascriptContent;
+         jsonContent.name = fileNameTmp;
+         //console.log('[5] Read jsonContent = ' + JSON.stringify(jsonContent));
+         transformedFile.contents = Buffer.from(JSON.stringify(jsonContent));
+         //console.log('[6] transformedFile.contents = ' + transformedFile.contents);
+         // vinylFile.history = jsonFilePath;
+
+         // console.log('[4] transformedFile = ' + transformedFile);
+         callback(null, transformedFile);
+     });
+ };
+ exports.gulpPackContent = gulpPackContent;
+
+ const importDocumentsToDb = async function () {
+     const compendiums = ["5e"]; // TODO add all folders
+     for (const comp of compendiums) {
+         const db = new Datastore({ filename: `./dist/packs/macros-${comp}.db` });
+
+         db.loadDatabase(function (error) {
+             if (error) {
+                 console.log("FATAL: local database could not be loaded. Caused by: " + error);
+                 throw error;
+             }
+             console.log("INFO: local database loaded successfully.");
+
+             console.log(`./dist/packs/${comp}/*.js`);
+             glob(`./dist/packs/${comp}/*.js`, function (err, files) {
+                 // read the folder or folders if you want: example json/**/*.json
+                 console.log("Files : " + files.length);
+                 if (err) {
+                     console.error("cannot read the folder, something goes wrong with glob", err);
+                 }
+                 files.forEach(function (file) {
+                     fs.readFile(file, "utf8", function (err, data) {
+                         // Read each file
+                         if (err) {
+                             console.log("cannot read the file, something goes wrong with the file", err);
+                         }
+                         console.log("File : " + file);
+                         var doc = JSON.parse(data);
+                         db.insert(doc, function (err, newDoc) {
+                             // Callback is optional
+                             // newDoc is the newly inserted document, including its _id
+                             // newDoc has no key called notToBeSaved since its value was undefined
+                             if (error) {
+                                 console.log("ERROR: saving document: " + JSON.stringify(doc) + ". Caused by: " + error);
+                                 throw error;
+                             }
+                             //console.log('INFO: successfully saved document: ' + JSON.stringify(newDoc));
+                         });
+                     });
+                 });
+             });
+         });
+     }
+ };
+ exports.importDocumentsToDb = importDocumentsToDb;
+
+ const deleteDocuments = async function () {
+     const compendiums = ["5e"];
+     for (const comp of compendiums) {
+         console.log("Delete folder : " + `./dist/packs/${comp}`);
+         del(`./dist/packs/${comp}`, { force: true });
+     }
+ };
+ exports.deleteDocuments = deleteDocuments;
+
+ /**
+  * Gulp foundryCompilePack task
+  *  - Generate .db foundry files
+  * @param {function} done Done callback function
+  * @returns
+  */
+ async function foundryCompilePack(done) {
+     const compendiums = ["5e"];
+     for (const comp of compendiums) {
+         // glob(`${config.src}/packs/*[!\.md]`, (err, packs) => {
+         glob(`./${comp}/*.js`, (err, packs) => {
+             for (const pack of packs) {
+                 console.log(pack);
+                 gulp.src(`${pack}`)
+                     .pipe(gulpPackContent())
+                     // .pipe(rename(function (path) {
+                     //   path.extname = ".json";
+                     // }))
+                     .pipe(gulpJsonminify())
+                     .pipe(gulpConcat(pack.substring(pack.lastIndexOf("/"))))
+                     .pipe(gulp.dest(`./dist/packs/${comp}`));
+             }
+             done();
+         });
+     }
+ }
+ exports.foundryCompilePack = foundryCompilePack;
+
+ // ========================================================================
+
 function getConfig() {
     const configPath = path.resolve(process.cwd(), `foundryconfig.json`);
     let config;
@@ -659,10 +797,11 @@ const test = () => {
 // const execBuild = gulp.parallel(buildTS, buildLess, copyFiles); // MOD 4535992
 const execBuild = gulp.parallel(buildTS, buildJS, buildMJS, buildCSS, buildLess, buildSASS, copyFiles);
 
-exports.build = gulp.series(clean, execBuild);
+exports.build = gulp.series(clean, execBuild, importDocumentsToDb);
 exports.bundle = gulp.series(clean, execBuild, bundleModule, cleanDist);
 exports.watch = buildWatch;
 exports.clean = clean;
+exports.postClean = deleteDocuments;
 exports.link = linkUserData;
 exports.package = packageBuild;
 exports.update = updateManifest;

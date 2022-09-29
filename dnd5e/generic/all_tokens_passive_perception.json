@@ -2,11 +2,7 @@
     "name":"All Token's Passive Perception",
     "permission":{"default":0 },
     "type": "script",
-    "flags": {
-      "core": {
-        "sourceId": "Macro.DBlk2wFOpxxhM9eC"
-      }
-    },
+    "flags": {},
     "scope":"global",
     "command":"",
     "author":"",

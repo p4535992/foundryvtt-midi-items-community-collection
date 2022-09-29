@@ -1,5 +1,5 @@
 {
-    "name": "",
+    "name": "Show Tokens Resistances",
     "permission":{"default":0 },
     "type":"script",
     "flags": {
@@ -11,5 +11,6 @@
     "command":"",
     "author":"",
     "img":"icons/svg/dice-target.svg",
-    "actorIds":[]
+    "actorIds":[],
+    "_id":"2NIoqVnUSV1FgJ9e"
   }

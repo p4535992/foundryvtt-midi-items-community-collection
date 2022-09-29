@@ -1,18 +1,15 @@
 
 {
-    "name": "",
+    "name": "Apply Damage",
     "permission":{"default":0 },
     "type":"script",
-    "flags": {
-        "core": {
-          "sourceId": "Macro.DBlk2wFOpxxhM9eC"
-        }
-    },
+    "flags": {},
     "scope":"global",
     "command":"",
     "author":"",
     "img":"icons/svg/dice-target.svg",
-    "actorIds":[]
+    "actorIds":[],
+    "_id":"Ey3vzQB2uvOrLgQ1"
   }
 
-wCsoNxA9I9elUaGF
+
