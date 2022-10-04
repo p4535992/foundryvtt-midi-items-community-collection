@@ -1,12 +1,14 @@
 {
-    "name": "Stealth Check",
-    "permission":{"default":0 },
-    "type":"script",
-    "flags": {},
-    "scope":"global",
-    "command":"",
-    "author":"",
-    "img":"icons/svg/dice-target.svg",
-    "actorIds":[],
-    "_id":"2RitOkKtnQe9pbuF"
-  }
+  "name": "Stealth Check",
+  "permission": {
+    "default": 0
+  },
+  "type": "script",
+  "flags": {},
+  "scope": "global",
+  "command": "// Grabs selected tokens and rolls a stealth check against all other tokens passive perception on the map. Then returns the result.\r\n\r\n// getting all actors of selected tokens\r\nlet actors = canvas.tokens.controlled.map(({ actor }) => actor);\r\n\r\n// if there are no selected tokens, roll for the player's character.\r\nif (actors.length < 1 && game.user.character) {\r\n  actors = [game.user.character];\r\n}\r\nconst validActors = actors.filter(actor => actor != null);\r\n\r\nlet messageContent;\r\nif (validActors.length) {\r\n  messageContent = 'pp = passive perception<br>';\r\n} else {\r\n  messageContent = 'No tokens selected, please select at least one.';\r\n}\r\n// roll for every actor\r\nfor (const selectedActor of validActors) {\r\n  const stealthMod = selectedActor.data.data.skills.ste.total; // stealth roll\r\n  const result = await new Roll(`1d20+${stealthMod}`).roll({async: true});\r\n  const stealth = result.total; // rolling the formula\r\n  messageContent += `<hr><h3>${selectedActor.name} stealth roll was a <b>${stealth}</b> (1d20 + ${stealthMod}).</h3>`; // creating the output string\r\n\r\n  // grab a list of unique tokens then check their passive perception against the rolled stealth.\r\n  const uniqueActor = {};\r\n  const caughtBy = canvas.tokens.placeables\r\n    .filter(token => !!token.actor)\r\n    .filter(({ actor }) => actor.data.data.attributes.hp.value > 0) // filter out dead creatures.\r\n    .filter(({ actor }) => { // filter out duplicate token names. ie: we assume all goblins have the same passive perception\r\n      if (uniqueActor[actor.name]) {\r\n        return false;\r\n      }\r\n      uniqueActor[actor.name] = true;\r\n      return true;\r\n    })\r\n    .filter(({ actor }) => {\r\n      return selectedActor.id !== actor.id; // Don't check to see if the token sees himself.\r\n    })\r\n    .filter(({ actor }) => actor.data.data.skills.prc.passive >= stealth); // check map tokens passives with roller stealth\r\n\r\n  if (!caughtBy.length) {\r\n    messageContent += 'Stealth successful!<br>';\r\n  } else {\r\n    messageContent += 'Stealth questionable:<br>';\r\n    caughtBy.map(({ actor }) => {\r\n      messageContent += `<b>${actor.name}</b> pp(${actor.data.data.skills.prc.passive}).<br>`;\r\n    });\r\n  }\r\n}\r\n\r\n// create the message\r\nconst chatData = {\r\n  user: game.user._id,\r\n  speaker: game.user,\r\n  content: messageContent,\r\n  whisper: game.users.filter((u) => u.isGM).map((u) => u._id),\r\n};\r\nChatMessage.create(chatData, {});\r\n",
+  "author": "",
+  "img": "icons/svg/dice-target.svg",
+  "actorIds": [],
+  "_id": "2RitOkKtnQe9pbuF"
+}

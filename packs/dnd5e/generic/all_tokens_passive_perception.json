@@ -1,12 +1,14 @@
 {
-    "name":"All Token's Passive Perception",
-    "permission":{"default":0 },
-    "type": "script",
-    "flags": {},
-    "scope":"global",
-    "command":"",
-    "author":"",
-    "img":"icons/svg/dice-target.svg",
-    "actorIds":[],
-    "_id":"DBlk2wFOpxxhM9eC"
+  "name": "All Token's Passive Perception",
+  "permission": {
+    "default": 0
+  },
+  "type": "script",
+  "flags": {},
+  "scope": "global",
+  "command": "// Pull the passive perception of each token in the current scene and whisper the results to the GM.\r\n// Only tested with the 5e System in Foundry.\r\n// Author: @Drunemeton#7955. Based on the original macro by author @Erogroth#7134.\r\n\r\n// Initalize variables.\r\nlet pcArray = [];\r\nlet npcArray = [];\r\nlet messageContentPC = \"\";\r\nlet messageContentNPC = \"\";\r\nlet messageHeaderPC = \"<b>PC Passive Perception</b><br>\";\r\nlet messageHeaderNPC = \"<b>NPC Passive Perception</b><br>\";\r\n\r\n// Gather tokens in the current scene into an array.\r\nlet tokens = canvas.tokens.placeables.filter((token) => token.data && token.actor);\r\n\r\n// From the tokens array sort into PC and NPC arrays.\r\nfor (let count of tokens) {\r\n  let tokenType = count.actor.data.type;\r\n  let tokenName = count.data.name;\r\n  let tokenPassive = count.actor.data.data.skills.prc.passive;\r\n  \r\n  if(tokenType === \"character\") {\r\n    pcArray.push({ name: tokenName, passive: tokenPassive });\r\n  } \r\n  if(tokenType === \"npc\") {\r\n    npcArray.push({ name: tokenName, passive: tokenPassive });\r\n  }\r\n}\r\n\r\n// Sort each array.\r\nsortArray(pcArray);\r\nsortArray(npcArray);\r\n\r\n// Build chat message, with PCs first, then NPCs.\r\nfor (let numPC of pcArray) {\r\n  messageContentPC += `${numPC.name}: <b>${numPC.passive}</b><br>`;\r\n}\r\nfor (let numNPC of npcArray) {\r\n  messageContentNPC += `${numNPC.name}: <b>${numNPC.passive}</b><br>`;\r\n}\r\n\r\nlet chatMessage = (messageHeaderPC + messageContentPC + `<br>` + messageHeaderNPC + messageContentNPC);\r\n\r\nlet chatData = {\r\n  user: game.user._id,\r\n  speaker: ChatMessage.getSpeaker(),\r\n  content: chatMessage,\r\n  whisper: game.users.filter((u) => u.isGM).map((u) => u._id),\r\n};\r\n\r\n// Display chat message.\r\nChatMessage.create(chatData, {});\r\n\r\n// Sort each array by Name.\r\n  function sortArray(checkArray) {\r\n    checkArray.sort(function (a, b) {\r\n      var nameA = a.name.toUpperCase(); // ignore upper and lowercase\r\n      var nameB = b.name.toUpperCase(); // ignore upper and lowercase\r\n      if (nameA < nameB) {\r\n        return -1;\r\n      }\r\n      if (nameA > nameB) {\r\n        return 1;\r\n      }\r\n      // names must be equal\r\n      return 0;\r\n    });\r\n\r\n    // Sort array by Passive Perception.\r\n    checkArray.sort(function (a, b) {\r\n      return b.passive - a.passive;\r\n    });\r\n  }\r\n",
+  "author": "",
+  "img": "icons/svg/dice-target.svg",
+  "actorIds": [],
+  "_id": "DBlk2wFOpxxhM9eC"
 }

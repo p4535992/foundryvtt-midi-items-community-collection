@@ -1,12 +1,14 @@
 {
-    "name": "Wild Magic",
-    "permission":{"default":0 },
-    "type":"script",
-    "flags": {},
-    "scope":"global",
-    "command":"",
-    "author":"",
-    "img":"icons/svg/dice-target.svg",
-    "actorIds":[],
-    "_id":"tzvu5zxY5CiYYpZU"
-  }
+  "name": "Wild Magic",
+  "permission": {
+    "default": 0
+  },
+  "type": "script",
+  "flags": {},
+  "scope": "global",
+  "command": "function printMessage(message){\r\n        let chatData = {\r\n                user : game.user.id,\r\n                content : message,\r\n                blind: true,\r\n                whisper : game.users.filter(u => u.isGM).map(u => u.id)\r\n        };\r\n\r\n        ChatMessage.create(chatData,{});        \r\n}\r\n\r\n\r\nconst roll = new Roll(`1d20`);\r\nlet result = await roll.roll();\r\n\r\nif (result.total == 1) {\r\n    printMessage('<p style=\"color:red;\">Wild magic has been triggered.</p>');\r\n}\r\nelse{\r\n    printMessage(\"Wild magic was not triggered on a \" + result.total);\r\n}",
+  "author": "",
+  "img": "icons/svg/dice-target.svg",
+  "actorIds": [],
+  "_id": "tzvu5zxY5CiYYpZU"
+}

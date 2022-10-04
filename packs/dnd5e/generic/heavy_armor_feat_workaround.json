@@ -1,12 +1,14 @@
 {
-    "name": "Heavy Armor Feature Workaround",
-    "permission":{"default":0 },
-    "type":"script",
-    "flags": {},
-    "scope":"global",
-    "command":"",
-    "author":"",
-    "img":"icons/svg/dice-target.svg",
-    "actorIds":[],
-    "_id":"Tbg9DhQqgQQZdMGZ"
-  }
+  "name": "Heavy Armor Feature Workaround",
+  "permission": {
+    "default": 0
+  },
+  "type": "script",
+  "flags": {},
+  "scope": "global",
+  "command": "//Crude but effective way to simulate Heavy Armor Master.\r\n//Every time the player takes eligible damage, they can just click this macro with their token selected to \"get their 3HP back.\"\r\n//Questions? Ask in #macro-polo on Discord. If absolutely needed, please ping Norc#5108.\r\n\r\n//Known minor limitation: Does not take into account temp HP AT ALL.\r\n\r\nfunction modifyHP(token, amount) {\r\n    let hp_cur = token.actor.data.data.attributes.hp.value;\r\n    let hp_max = token.actor.data.data.attributes.hp.max;\r\n    let hp_min = token.actor.data.data.attributes.hp.min;\r\n    hp_cur = (hp_cur+amount > hp_max) ? hp_max : hp_cur+amount;\r\n    hp_cur = (hp_cur < hp_min) ? hp_min : hp_cur;\r\n    token.actor.update({'data.attributes.hp.value': parseInt(hp_cur)});\r\n    return hp_cur;\r\n  }\r\n\r\nif(token) {\r\n    //Note: Just change the number after the comma to heal/receive other HP values. Negative numbers indicate damage.\r\n    modifyHP(token,3);\r\n} else {\r\n    ui.notifications.notify(\"Please select a token.\");\r\n}6\r\n",
+  "author": "",
+  "img": "icons/svg/dice-target.svg",
+  "actorIds": [],
+  "_id": "Tbg9DhQqgQQZdMGZ"
+}

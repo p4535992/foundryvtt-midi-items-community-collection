@@ -1,12 +1,14 @@
 {
-    "name": "Bardic Inspiration",
-    "permission":{"default":0 },
-    "type":"script",
-    "flags": {},
-    "scope":"global",
-    "command":"",
-    "author":"",
-    "img":"icons/svg/dice-target.svg",
-    "actorIds":[],
-    "_id":"GuLzJbqUoQl7Jwak"
-  }
+  "name": "Bardic Inspiration",
+  "permission": {
+    "default": 0
+  },
+  "type": "script",
+  "flags": {},
+  "scope": "global",
+  "command": "let bardinsp_data = null;\r\n\r\n//Check if have Bardic Insperation\r\n\r\nif (canvas.tokens.controlled.length == 1){\r\n\t//console.log(canvas.tokens.controlled);\r\n\tlet owner_actor = canvas.tokens.controlled[0].actor;\r\n\r\n\tfor (let item in owner_actor.data.items){\r\n\t\tif (item.name == \"Bardic Inspiration\"){\r\n\t\t\tbardinsp_data = item;\r\n\t\t\tbreak;\r\n\t\t}\r\n\t}\r\n}\r\n\r\n//Get the Target of Bardic Insperation\r\nif (canvas.tokens._hover != null){\r\n\tlet bardinsp_token = canvas.tokens._hover;\r\n\r\n\r\n\tconst effect = bardinsp_token.actor.effects.entries;\r\n\r\n\tbardinsp_token.toggleEffect(\"systems/dnd5e/icons/skills/yellow_08.jpg\");\r\n}",
+  "author": "",
+  "img": "icons/svg/dice-target.svg",
+  "actorIds": [],
+  "_id": "GuLzJbqUoQl7Jwak"
+}

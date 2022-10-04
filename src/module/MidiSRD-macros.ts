@@ -340,7 +340,9 @@ export class MidiMacros {
 					name: "Arcane Hand",
 					//@ts-ignore
 					"system.attributes.hp": {
+                         //@ts-ignore
 						value: actor.system.attributes.hp.max,
+                        //@ts-ignore
 						max: actor.system.attributes.hp.max,
 					},
 				},
@@ -2271,6 +2273,7 @@ export class MidiMacros {
 		if (args[0] === "on") {
             //@ts-ignore
 			for (const weapon of weapons) {
+                //@ts-ignore
 				if (weapon.abilityMod === "str") {
                     //@ts-ignore
 					const newWeaponParts = duplicate(weapon.system.damage.parts);
@@ -2457,19 +2460,21 @@ export class MidiMacros {
 			const range = canvas.scene?.createEmbeddedDocuments("MeasuredTemplate", [
 				{
 					t: "circle",
-					user: game.user?._id,
-					x: token.x + canvas.grid.size / 2,
-					y: token.y + canvas.grid.size / 2,
+					user: game.user?.id,
+                    //@ts-ignore
+					x: token.x + <number>canvas.grid?.size / 2,
+                     //@ts-ignore
+					y: token.y + <number>canvas.grid?.size / 2,
 					direction: 0,
 					distance: 60,
 					borderColor: "#FF0000",
 					flags: { "midi-items-community": { SpiritualWeaponRange: { ActorId: actor.id } } },
 				},
 			]);
-			range.then((result) => {
+			range?.then((result) => {
 				const templateData = {
 					t: "rect",
-					user: game.user?._id,
+					user: game.user?.id,
 					distance: 7,
 					direction: 45,
 					texture: texture || "",
@@ -2478,6 +2483,7 @@ export class MidiMacros {
 					flags: { "midi-items-community": { SpiritualWeapon: { ActorId: actor.id } } },
 					fillColor: game.user?.color,
 				};
+                //@ts-ignore
 				Hooks.once("createMeasuredTemplate", MidiMacros.deleteTemplates("SpiritualWeaponRange", actor));
 				MidiMacros.templateCreation(templateData, actor);
 			});
@@ -2543,55 +2549,64 @@ export class MidiMacros {
 			},
 		};
 		const { x, y } = await MidiMacros.warpgateCrosshairs(token, 60, "Unseen Servant", texture, {}, -1);
-
+        //@ts-ignore
 		await warpgate.spawnAt({ x, y }, CONSTANTS.MODULE_NAME, updates, { controllingActor: actor });
 	}
 	static async wardingBond(args) {
 		//DAE Macro Execute, Effect Value = "Macro Name" @target @item
 		const { actor, token, lArgs } = MidiMacros.targets(args);
 		const DAEItem = lArgs.efData.flags.dae.itemData;
-		const caster = canvas.tokens.placeables.find((token) => token?.actor?.items.get(DAEItem._id) != null);
+		const caster = canvas.tokens?.placeables?.find((token) => token?.actor?.items.get(DAEItem._id) != null);
 		if (args[0] === "on") {
+            //@ts-ignore
 			await DAE.setFlag(actor, "WardingBondIds", {
 				tokenID: actor.id,
-				casterID: caster.actor.id,
+                //@ts-ignore
+				casterID: caster.actor?.id,
 			});
 			SetWardingBondHook(token);
 		}
 
 		async function SetWardingBondHook(token) {
 			const hookId = Hooks.on("preUpdateActor", async (actor, update) => {
+                //@ts-ignore
 				const flag = await DAE.getFlag(actor, "WardingBondIds");
 				if (flag.tokenID !== actor.id) return;
+                //@ts-ignore
 				if (!"actorData.system.attributes.hp" in update) return;
 				const oldHP = actor.system.attributes.hp.value;
 				const newHP = getProperty(update, "system.attributes.hp.value");
 				const hpChange = oldHP - newHP;
 				if (hpChange > 0 && typeof hpChange === "number") {
-					const caster = game.actors?.get(flag.casterID).getActiveTokens()[0];
-					caster.actor.applyDamage(hpChange);
+					const caster = <Token>game.actors?.get(flag.casterID)?.getActiveTokens()[0];
+                    //@ts-ignore
+					caster?.actor?.applyDamage(hpChange);
 				}
 			});
+            //@ts-ignore
 			await DAE.setFlag(actor, "WardingBondHook", hookId);
 		}
 
 		async function RemoveHook() {
+            //@ts-ignore
 			const flag = await DAE.getFlag(actor, "WardingBondHook");
 			Hooks.off("preUpdateActor", flag);
+            //@ts-ignore
 			await DAE.unsetFlag(actor, "WardingBondHook");
 		}
 
 		if (args[0] === "off") {
 			RemoveHook();
+            //@ts-ignore
 			await DAE.unsetFlag(actor, "WardingBondIds");
 			console.log("Death Ward removed");
 		}
 
 		if (args[0] === "each") {
 			await RemoveHook();
-			await SetWardingBondHook();
+			await SetWardingBondHook(undefined);
 		}
 	}
 }
-
+//@ts-ignore
 window.MidiMacros = MidiMacros;

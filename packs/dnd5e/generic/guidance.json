@@ -1,12 +1,14 @@
 {
-    "name": "Guidance",
-    "permission":{"default":0 },
-    "type":"script",
-    "flags": {},
-    "scope":"global",
-    "command":"",
-    "author":"",
-    "img":"icons/svg/dice-target.svg",
-    "actorIds":[],
-    "_id":"GlWj7z7p2V4JKXMx"
-  }
+  "name": "Guidance",
+  "permission": {
+    "default": 0
+  },
+  "type": "script",
+  "flags": {},
+  "scope": "global",
+  "command": "// new build for guidance macro by Mr.White and Penguin#0949 and with no help all of Kotetsushin#7680 trust me \r\n// version beta 4.2.0\r\n\r\n// user notes\r\n// this macro is inteded for use by the recipient of the bless spell in D&D 5e on Forge VTT\r\n// N.B. every recipient will need to use this macro independantly on their own Actor/token.\r\n\r\n//user modifiable declarations CHANGE AT YOUR OWN RISK\r\nconst GuidIconPath = 'icons/svg/windmill.svg';\r\nlet GuideMsg = ' is guided!';\r\nlet endGuideMsg = ' is no longer guided.';\r\n\r\n//fixed declarations DO NOT MODIFY\r\nlet chatMsg = '';\r\nlet macroActor = token.actor;\r\nlet Guided = macroActor.effects.find(i => i.data.label === \"Guided\")\r\nlet Guide = {\r\n    changes: [\r\n        {\r\n            key: \"data.bonuses.abilities.check\",\r\n            mode: 2,\r\n            priority: 20,\r\n            value: \"+1d4\",\r\n        },\r\n    ],\r\n    duration: {\r\n        seconds: 60,\r\n    },\r\n    icon: GuidIconPath,\r\n    label: \"Guided\"\r\n}\r\n//identify token\r\nif (macroActor === undefined || macroActor === null) {\r\n    ui.notifications.warn(\"Please select a token first.\");\r\n}\r\nelse {\r\n// If already guided\t\r\n    if (Guided) {\r\n        macroActor.deleteEmbeddedDocuments(\"ActiveEffect\", [Guided.id]);\r\n        // anounce to chat\r\n        chatMsg = `${macroActor.name} ${endGuideMsg}`;\r\n    }\r\n    // if not already guided\t\r\n    else {\r\n        macroActor.createEmbeddedDocuments(\"ActiveEffect\", [Guide]);\r\n        // anounce to chat\r\n        chatMsg = `${macroActor.name} ${GuideMsg}`;\r\n    }\r\n    // write to chat if needed:\r\n    if (chatMsg !== '') {\r\n        let chatData = {\r\n            user: game.user._id,\r\n            speaker: ChatMessage.getSpeaker(),\r\n            content: chatMsg\r\n        };\r\n        ChatMessage.create(chatData, {});\r\n    }\r\n}\r\n",
+  "author": "",
+  "img": "icons/svg/dice-target.svg",
+  "actorIds": [],
+  "_id": "GlWj7z7p2V4JKXMx"
+}

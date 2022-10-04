@@ -1,12 +1,14 @@
 {
-    "name":"Animate Tiny Weapons",
-    "permission":{"default":0 },
-    "type": "script",
-    "flags": {},
-    "scope":"global",
-    "command":"",
-    "author":"",
-    "img":"icons/svg/dice-target.svg",
-    "actorIds":[],
-    "_id":"jnZrWkjzZIIXnvON"
+  "name": "Animate Tiny Weapons",
+  "permission": {
+    "default": 0
+  },
+  "type": "script",
+  "flags": {},
+  "scope": "global",
+  "command": "function printMessage(message){\r\n\tlet chatData = {\r\n\t\tuser : game.user._id,\r\n\t\tcontent : message,\r\n\t\t//blind: true,\r\n\t\twhisper : game.users.filter(u => u.isGM).map(u => u.data._id)\r\n\t};\r\n\r\n\tChatMessage.create(chatData,{});\t\r\n}\r\n\r\n\r\nfunction OutputManySameDice(dicearray){\r\n\tlet output = `\r\n<div class=\"dice-roll\">\r\n\t<div class=\"dice-result\">\r\n\t\t<div class=\"dice-formula\">${dicearray.length}d${dicearray[0].dice[0].faces} + 8</div>\r\n\t\t<div class=\"dice-tooltip\">\r\n\t\t\t<section class=\"tooltip-part\">\r\n\t\t\t\t<div class=\"dice\">\r\n\t\t\t\t\t<header class=\"part-header flexrow\">\r\n\t\t\t\t\t<span class=\"part-formula\">${dicearray.length}d${dicearray[0].dice[0].faces}</span>`\r\n\r\n\tfor (var i = 0; i < dicearray.length; i++) {\r\n\t\toutput += `\r\n\t\t\t\t\t\t<span class=\"part-total\">${dicearray[i].terms[0].results[0].result}</span>`\r\n\t}\r\n\r\n\toutput = output + `\r\n\t\t\t\t\t\t</header>\r\n\t\t\t\t\t\t<ol class=\"dice-rolls\">`\r\n\r\n\tfor (var i = 0; i < dicearray.length; i++) {\r\n\t\tif (dicearray[i].terms[0].results[0].result == 1) {\r\n\t\t\toutput += `<li class=\"roll die d${dicearray[i].dice[0].faces} min\">${dicearray[i].terms[0].results[0].result}</li>`\r\n\t\t}\r\n\t\telse if (dicearray[i].terms[0].results[0].result == dicearray[i].dice[0].faces){\r\n\t\t\toutput += `<li class=\"roll die d${dicearray[i].dice[0].faces} max\">${dicearray[i].terms[0].results[0].result}</li>`\r\n\t\t}\r\n\t\telse{\r\n\t\t\toutput += `<li class=\"roll die d${dicearray[i].dice[0].faces}\">${dicearray[i].terms[0].results[0].result}</li>`\r\n\t\t}\r\n\t}\r\n\toutput = output + `    \r\n\t\t\t\t\t</ol>\r\n\t\t\t\t</div>\r\n\t\t\t</section>\r\n\t\t</div>\r\n\t\t`\r\n\r\n\tfor (var i = 0; i < dicearray.length; i++) {\r\n\t\tif (dicearray[i].terms[0].results[0].result == 1) {\r\n\t\t\toutput += `<h4 class=\"dice-total fumble\">${dicearray[i].total}</h4>`\r\n\t\t}\r\n\t\telse if (dicearray[i].terms[0].results[0].result == dicearray[i].dice[0].faces){\r\n\t\t\toutput += `<h4 class=\"dice-total critical\">${dicearray[i].total}</h4>`\r\n\t\t}\r\n\t\telse{\r\n\t\t\toutput += `<h4 class=\"dice-total\">${dicearray[i].total}</h4>`\r\n\t\t}\r\n\t}\r\n\r\n\toutput += `\r\n\t</div>\r\n</div>`\r\n\r\n\treturn output\r\n}\r\n\r\n\r\n\r\n\r\n\r\n//Launch Dialog message with a counter from 1-10 for the number of dice to roll\r\nnew Dialog({\r\n\ttitle: `Animate Objects (tiny)`,\r\n\tcontent: `\r\n\t\t<form>\r\n\t\t\t<div style=\"display: inline-block; width: 100%; margin-bottom: 10px\">\r\n\t\t\t\t<label for=\"output-options\" style=\"margin-right: 10px\">Number of Objects:</label>\r\n\t\t\t\t<select id=\"output-options\" />\r\n\t\t\t\t\t<option value=\"1\">1</option>\r\n\t\t\t\t\t<option value=\"2\">2</option>\r\n\t\t\t\t\t<option value=\"3\">3</option>\r\n\t\t\t\t\t<option value=\"4\">4</option>\r\n\t\t\t\t\t<option value=\"5\">5</option>\r\n\t\t\t\t\t<option value=\"6\">6</option>\r\n\t\t\t\t\t<option value=\"7\">7</option>\r\n\t\t\t\t\t<option value=\"8\">8</option>\r\n\t\t\t\t\t<option value=\"9\">9</option>\r\n\t\t\t\t\t<option value=\"10\">10</option>\r\n\t\t\t\t</select>\r\n\t\t\t</div>\r\n\t\t</form>\r\n\t`,\r\n\tbuttons: {\r\n\t\tyes: {\r\n\t\t\ticon: \"<i class='fas fa-check'></i>\",\r\n\t\t\tlabel: `Attack`,\r\n\t\t\tcallback: (html) => {\r\n\t\t\t\tlet count = html.find('#output-options').val();\r\n\t\t\t\tlet rolls = [];\r\n\t\t\t\tlet debugOutput = \"\";\r\n\r\n\t\t\t\t//Do attack Rolls\r\n\t\t\t\tfor (var i = 0; i < count; i++) {\r\n\t\t\t\t\tlet roll = new Roll(`1d20+8`);\r\n\r\n\t\t\t\t\trolls.push(roll.evaluate({async: false}));\r\n\t\t\t\t\t//console.log(rolls);\r\n\t\t\t\t\t//console.log(rolls[rolls.length - 1].terms);\r\n\r\n\t\t\t\t\tdebugOutput = debugOutput.concat(rolls[rolls.length - 1].total);\r\n\t\t\t\t\tdebugOutput = debugOutput.concat(\" \");\r\n\t\t\t\t}\r\n\r\n\r\n\t\t\t\t//console.log(debugOutput);\r\n\t\t\t\tprintMessage(\"Animated Weapons (tiny) Attacks: \" + OutputManySameDice(rolls));\r\n\r\n\t\t\t}\r\n\t\t},\r\n\t\tno: {\r\n\t\t\ticon: \"<i class='fas fa-times'></i>\",\r\n\t\t\tlabel: `Cancel`\r\n\t\t},\r\n\t},\r\n\tdefault: \"yes\"\r\n}).render(true)\r\n",
+  "author": "",
+  "img": "icons/svg/dice-target.svg",
+  "actorIds": [],
+  "_id": "jnZrWkjzZIIXnvON"
 }

@@ -58,8 +58,8 @@ const argv = require(`yargs`).argv;
 const rename = require("gulp-rename");
 const gulpConcat = require("gulp-concat");
 const gulpJsonminify = require("gulp-jsonminify");
-const through = require("through2");
 const through2 = require("through2");
+const yargs = require("yargs");
 const Datastore = require("@seald-io/nedb");
 const mergeStream = require("merge-stream");
 const logger = require("fancy-log");
@@ -67,17 +67,23 @@ const logger = require("fancy-log");
 // =========================================================================
 
     /**
+     * Parsed arguments passed in through the command line.
+     * @type {object}
+     */
+    const parsedArgs = yargs(process.argv).argv;
+
+    /**
      * Folder where the compiled compendium packs should be located relative to the
      * base 5e system folder.
      * @type {string}
      */
-    const PACK_DEST = "src/packs/dnd5e";
+    const PACK_DEST = "src/packs";
 
     /**
      * Folder where source JSON files should be located relative to the 5e system folder.
      * @type {string}
      */
-    const PACK_SRC = "packs/src";
+    const PACK_SRC = "packs/dnd5e";
 
     /**
      * Cache of DBs so they aren't loaded repeatedly when determining IDs.
@@ -132,12 +138,13 @@ const logger = require("fancy-log");
 
         return new Promise((resolve, reject) => {
         db.findOne({ name: data.name }, (err, entry) => {
-            if ( entry ) {
-            resolve(entry._id);
-            } else {
-            resolve(db.createNewId());
-            }
-        });
+                if ( entry ) {
+                    resolve(entry._id);
+                } else {
+                    //resolve(db.createNewId());
+                    resolve(undefined);
+                }
+            });
         });
     }
 
@@ -162,21 +169,21 @@ const logger = require("fancy-log");
         const packName = parsedArgs.pack;
         const entryName = parsedArgs.name?.toLowerCase();
         const folders = fs.readdirSync(PACK_SRC, { withFileTypes: true }).filter(file =>
-        file.isDirectory() && ( !packName || (packName === file.name) )
+            file.isDirectory() && ( !packName || (packName === file.name) )
         );
 
         const packs = folders.map(folder => {
-        logger.info(`Cleaning pack ${folder.name}`);
-        return gulp.src(path.join(PACK_SRC, folder.name, "/**/*.json"))
-            .pipe(through2.obj(async (file, enc, callback) => {
-            const json = JSON.parse(file.contents.toString());
-            const name = json.name.toLowerCase();
-            if ( entryName && (entryName !== name) ) return callback(null, file);
-            cleanPackEntry(json);
-            if ( !json._id ) json._id = await determineId(json, folder.name);
-            fs.rmSync(file.path, { force: true });
-            fs.writeFileSync(file.path, `${JSON.stringify(json, null, 2)}\n`, { mode: 0o664 });
-            callback(null, file);
+            logger.info(`Cleaning pack ${folder.name}`);
+            return gulp.src(path.join(PACK_SRC, folder.name, "/**/*.json"))
+                .pipe(through2.obj(async (file, enc, callback) => {
+                const json = JSON.parse(file.contents.toString());
+                const name = json.name.toLowerCase();
+                if ( entryName && (entryName !== name) ) return callback(null, file);
+                cleanPackEntry(json);
+                if ( !json._id ) json._id = await determineId(json, folder.name);
+                fs.rmSync(file.path, { force: true });
+                fs.writeFileSync(file.path, `${JSON.stringify(json, null, 2)}\n`, { mode: 0o664 });
+                callback(null, file);
             }));
         });
 
@@ -301,7 +308,7 @@ const logger = require("fancy-log");
  // ========================================================================
 
     const gulpPackContent = () => {
-        return through.obj((vinylFile, _, callback) => {
+        through2.obj((vinylFile, _, callback) => {
             //console.log('[1] vinylFile = ' + JSON.stringify(vinylFile));
             const transformedFile = vinylFile.clone();
             let fileName = transformedFile.path.substring(
@@ -316,7 +323,7 @@ const logger = require("fancy-log");
             //console.log('[2] javascriptContent = ' + javascriptContent);
 
             if (!fs.existsSync(jsonFilePath)) {
-                jsonFilePath = `${transformedFile.base}/generic_macro.json`;
+                jsonFilePath = `${transformedFile.base}/${fileName}.json`;
             }
             let fileNameTmp = fileName;
             if (fileNameTmp.includes("\\")) {
@@ -343,6 +350,7 @@ const logger = require("fancy-log");
             // console.log('[4] transformedFile = ' + transformedFile);
             callback(null, transformedFile);
         });
+        // return Promise.resolve(`done`);
     };
     exports.gulpPackContent = gulpPackContent;
 
@@ -402,33 +410,109 @@ const logger = require("fancy-log");
     // };
     // exports.deleteDocuments = deleteDocuments;
 
-    // /**
-    //  * Gulp foundryCompilePack task
-    //  *  - Generate .db foundry files
-    //  * @param {function} done Done callback function
-    //  * @returns
-    //  */
-    // async function foundryCompilePack(done) {
-    //     const compendiums = ["5e"];
-    //     for (const comp of compendiums) {
-    //         // glob(`${config.src}/packs/*[!\.md]`, (err, packs) => {
-    //         glob(`./${comp}/*.js`, (err, packs) => {
-    //             for (const pack of packs) {
-    //                 console.log(pack);
-    //                 gulp.src(`${pack}`)
-    //                     .pipe(gulpPackContent())
-    //                     // .pipe(rename(function (path) {
-    //                     //   path.extname = ".json";
-    //                     // }))
-    //                     .pipe(gulpJsonminify())
-    //                     .pipe(gulpConcat(pack.substring(pack.lastIndexOf("/"))))
-    //                     .pipe(gulp.dest(`./dist/packs/${comp}`));
-    //             }
-    //             done();
-    //         });
-    //     }
-    // }
-    // exports.foundryCompilePack = foundryCompilePack;
+    /**
+     * Gulp foundryCompilePack task
+     *  - Generate .db foundry files
+     * @param {function} done Done callback function
+     * @returns
+     */
+    async function prepareJsons() {
+        // const compendiums = ["5e"];
+        const packName = "generic";// TODO parsedArgs.pack;
+        const entryName = "generic"; // TODO parsedArgs.name?.toLowerCase();
+        logger.info(`prepareJsons => parsedArgs.pack = ${parsedArgs.pack}`);
+        logger.info(`prepareJsons => entryName = ${entryName}`);
+
+        const directoryToCheck = PACK_SRC;
+        logger.info(`prepareJsons => directoryToCheck = ${directoryToCheck}`);
+
+        const folders = fs.readdirSync(directoryToCheck, { withFileTypes: true }).filter(file =>
+            file.isDirectory() && ( !packName || (packName === file.name) )
+        );
+        if(!folders || folders.length <= 0){
+            return Promise.resolve(`not done`);
+        }
+        logger.info(`prepareJsons => folders ${JSON.stringify(folders[0])}`);
+        const folderPath = directoryToCheck+"/"+folders[0].name; // e.g. generic
+        logger.info(`prepareJsons => folderPath = ${folderPath}`);
+        const filesJs = fs.readdirSync(folderPath, { withFileTypes: true }).filter((file) => {
+                // logger.info(file.name + " => " + path.extname(file.name));
+                return !file.isDirectory() && path.extname(file.name).toLowerCase() === `.js`;
+            }
+        );
+        logger.info(`prepareJsons => filesJs ${filesJs?.length}`);
+        const filesJson = fs.readdirSync(folderPath, { withFileTypes: true }).filter((file) => {
+                // logger.info(file.name + " => " + path.extname(file.name));
+                return !file.isDirectory() && path.extname(file.name).toLowerCase() === `.json`;
+            }
+        );
+        logger.info(`prepareJsons => filesJson ${filesJson?.length}`);
+        logger.info(`Readed files`);
+        const packs = folders.map(folder => {
+            logger.info(`Cleaning pack ${folder.name}`);
+            filesJs.map((fileJs) => {
+                const transformedFile = fileJs.name;
+                let fileName = transformedFile.substring(
+                    transformedFile.lastIndexOf("/"),
+                    transformedFile.lastIndexOf(".")
+                );
+                let jsonFilePath = `${fileName}.json`;
+                // logger.info(`prepareJsons => fileJs = ${fileName}`);
+                // logger.info(`prepareJsons => fileJs = ${jsonFilePath}`);
+                filesJson.map(async fileJson => {
+                    let fileNameJson = fileJson.name;
+                    // logger.info(`prepareJsons  => fileJson = ${fileNameJson}`);
+                    if(jsonFilePath === fileNameJson){
+                        // logger.info(`prepareJsons => Found = ${fileNameJson}`);
+                        // logger.info(`prepareJsons => Load Js = ${folderPath+"/"+fileJs.name}`);
+                        const javascriptContent = new String(fs.readFileSync(folderPath+"/"+fileJs.name));
+                        // logger.info(`prepareJsons => Load Json = ${folderPath+"/"+fileJson.name}`);
+                        const jsonObj = JSON.parse(fs.readFileSync(folderPath+"/"+fileJson.name));
+                        // logger.info(`prepareJsons => fileJson.contents = ${JSON.stringify(jsonObj)}`);
+                        // logger.info(`prepareJsons  => cleanPackEntry(`);
+                        cleanPackEntry(jsonObj);
+                        // logger.info(`prepareJsons  => cleanedPackEntry(`);
+                        if ( !jsonObj._id ) {
+                            jsonObj._id = await determineId(jsonObj, folder.name);
+                        }
+                        jsonObj.command = javascriptContent;
+                        // fs.rmSync(fileJson.path, { force: true });
+                        fs.writeFileSync(folderPath+"/"+fileJson.name, `${JSON.stringify(jsonObj, null, 2)}\n`, { mode: 0o664 });
+                    }
+                });
+            });
+        });
+        return Promise.resolve(`done`);
+    }
+    exports.prepareJsons = prepareJsons;
+
+
+    /**
+     * Removes unwanted flags, permissions, and other data from entries before extracting or compiling.
+     * @param {object} data  Data for a single entry to clean.
+     * @param {object} [options]
+     * @param {boolean} [options.clearSourceId]  Should the core sourceId flag be deleted.
+     */
+    function cleanPackEntry2(data, { clearSourceId=true }={}) {
+        if ( data.ownership ) data.ownership = { default: 0 };
+        if ( clearSourceId ) delete data.flags?.core?.sourceId;
+        delete data.flags?.importSource;
+        delete data.flags?.exportSource;
+        if ( data._stats?.lastModifiedBy ) data._stats.lastModifiedBy = "builder0000";
+
+        // Remove empty entries in flags
+        if ( !data.flags ) data.flags = {};
+        Object.entries(data.flags).forEach(([key, contents]) => {
+        if ( Object.keys(contents).length === 0 ) delete data.flags[key];
+        });
+
+        if ( data.effects ) data.effects.forEach(i => cleanPackEntry(i, { clearSourceId: false }));
+        if ( data.items ) data.items.forEach(i => cleanPackEntry(i, { clearSourceId: false }));
+        if ( data.system?.description?.value ) data.system.description.value = cleanString(data.system.description.value);
+        if ( data.label ) data.label = cleanString(data.label);
+        if ( data.name ) data.name = cleanString(data.name);
+        return Promise.resolve(`done`);
+    }
 
  // ========================================================================
 
@@ -1037,7 +1121,7 @@ const test = () => {
 const execBuild = gulp.parallel(buildTS, buildJS, buildMJS, buildCSS, buildLess, buildSASS, copyFiles);
 
 // exports.build = gulp.series(clean, execBuild, importDocumentsToDb);
-exports.build = gulp.series(clean, execBuild, gulpPackContent, cleanPacks, compilePacks); // extractPacks
+exports.build = gulp.series(clean, prepareJsons, cleanPacks, compilePacks, execBuild); // extractPacks
 exports.bundle = gulp.series(clean, execBuild, bundleModule, cleanDist);
 exports.watch = buildWatch;
 exports.clean = clean;
