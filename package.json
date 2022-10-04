@@ -7,9 +7,10 @@
     "scripts": {
         "publish": "gulp publish --update",
         "package": "gulp package",
-        "build": "gulp build --dbg && gulp postClean",
-        "build:link": "gulp build --dbg && gulp link && gulp postClean",
-        "build:test": "gulp build --dbg && gulp link && npm test && gulp postClean",
+        "buildOld": "gulp build --dbg && gulp postClean",
+        "build": "gulp build --dbg",
+        "build:link": "gulp build --dbg && gulp link",
+        "build:test": "gulp build --dbg && gulp link && npm test",
         "build:prod": "gulp bundle && npm test",
         "build:watch": "gulp watch",
         "clean": "gulp clean && gulp link --clean",
@@ -79,7 +80,8 @@
         "uglifyify": "^5.0.2",
         "vinyl-buffer": "^1.0.1",
         "vinyl-source-stream": "^2.0.0",
-        "yargs": "^17.1.1"
+        "yargs": "^17.1.1",
+        "fancy-log": "^2.0.0"
     },
     "dependencies": {
         "build": "^0.1.4",
