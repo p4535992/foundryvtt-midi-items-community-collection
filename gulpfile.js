@@ -74,7 +74,7 @@ const logger = require("fancy-log");
 
     /**
      * Folder where the compiled compendium packs should be located relative to the
-     * base 5e system folder.
+     * base system folder.
      * @type {string}
      */
     const PACK_DEST = "src/packs";
@@ -83,7 +83,7 @@ const logger = require("fancy-log");
      * Folder where source JSON files should be located relative to the 5e system folder.
      * @type {string}
      */
-    const PACK_SRC = "packs/dnd5e";
+    const PACK_SOURCES = ["dnd5e"];
 
     /**
      * Cache of DBs so they aren't loaded repeatedly when determining IDs.
@@ -168,24 +168,41 @@ const logger = require("fancy-log");
     function cleanPacks() {
         const packName = parsedArgs.pack;
         const entryName = parsedArgs.name?.toLowerCase();
-        const folders = fs.readdirSync(PACK_SRC, { withFileTypes: true }).filter(file =>
-            file.isDirectory() && ( !packName || (packName === file.name) )
-        );
+        // const folders = fs.readdirSync(PACK_SRC, { withFileTypes: true }).filter(file =>
+        //     file.isDirectory() && ( !packName || (packName === file.name) )
+        // );
+        let packs = [];
+        for(const directoryToCheck of PACK_SOURCES) {
+            logger.info(`compilePacks => directoryToCheck = ${directoryToCheck}`);
 
-        const packs = folders.map(folder => {
-            logger.info(`Cleaning pack ${folder.name}`);
-            return gulp.src(path.join(PACK_SRC, folder.name, "/**/*.json"))
-                .pipe(through2.obj(async (file, enc, callback) => {
-                const json = JSON.parse(file.contents.toString());
-                const name = json.name.toLowerCase();
-                if ( entryName && (entryName !== name) ) return callback(null, file);
-                cleanPackEntry(json);
-                if ( !json._id ) json._id = await determineId(json, folder.name);
-                fs.rmSync(file.path, { force: true });
-                fs.writeFileSync(file.path, `${JSON.stringify(json, null, 2)}\n`, { mode: 0o664 });
-                callback(null, file);
-            }));
-        });
+            let folders = [];
+            if(packName) {
+                folders = fs.readdirSync(directoryToCheck, { withFileTypes: true }).filter(file =>
+                    file.isDirectory() && ( !packName || (packName === file.name) )
+                );
+            } else {
+                folders = fs.readdirSync(directoryToCheck, { withFileTypes: true }).filter(file =>
+                    file.isDirectory()
+                );
+            }
+
+            const packsTmp = folders.map(folder => {
+                logger.info(`Cleaning pack ${folder.name}`);
+                // return gulp.src(path.join(PACK_SRC, folder.name, "/**/*.json"))
+                return gulp.src(path.join(directoryToCheck, folder.name, "/**/*.json"))
+                    .pipe(through2.obj(async (file, enc, callback) => {
+                    const json = JSON.parse(file.contents.toString());
+                    const name = json.name.toLowerCase();
+                    if ( entryName && (entryName !== name) ) return callback(null, file);
+                    cleanPackEntry(json);
+                    if ( !json._id ) json._id = await determineId(json, folder.name);
+                    fs.rmSync(file.path, { force: true });
+                    fs.writeFileSync(file.path, `${JSON.stringify(json, null, 2)}\n`, { mode: 0o664 });
+                    callback(null, file);
+                }));
+            });
+            packs.push(packsTmp);
+        }
 
         return mergeStream(packs);
     }
@@ -204,28 +221,45 @@ const logger = require("fancy-log");
     function compilePacks() {
         const packName = parsedArgs.pack;
         // Determine which source folders to process
-        const folders = fs.readdirSync(PACK_SRC, { withFileTypes: true }).filter(file =>
-            file.isDirectory() && ( !packName || (packName === file.name) )
-        );
+        // const folders = fs.readdirSync(PACK_SRC, { withFileTypes: true }).filter(file =>
+        //     file.isDirectory() && ( !packName || (packName === file.name) )
+        // );
+        let packs = [];
+        for(const directoryToCheck of PACK_SOURCES) {
+            logger.info(`compilePacks => directoryToCheck = ${directoryToCheck}`);
 
-        const packs = folders.map(folder => {
-        const filePath = path.join(PACK_DEST, `${folder.name}.db`);
-        fs.rmSync(filePath, { force: true });
-        const db = fs.createWriteStream(filePath, { flags: "a", mode: 0o664 });
-        const data = [];
-        logger.info(`Compiling pack ${folder.name}`);
-        return gulp.src(path.join(PACK_SRC, folder.name, "/**/*.json"))
-            .pipe(through2.obj((file, enc, callback) => {
-            const json = JSON.parse(file.contents.toString());
-            cleanPackEntry(json);
-            data.push(json);
-            callback(null, file);
-            }, callback => {
-            data.sort((lhs, rhs) => lhs._id > rhs._id ? 1 : -1);
-            data.forEach(entry => db.write(`${JSON.stringify(entry)}\n`));
-            callback();
-            }));
-        });
+            let folders = [];
+            if(packName) {
+                folders = fs.readdirSync(directoryToCheck, { withFileTypes: true }).filter(file =>
+                    file.isDirectory() && ( !packName || (packName === file.name) )
+                );
+            } else {
+                folders = fs.readdirSync(directoryToCheck, { withFileTypes: true }).filter(file =>
+                    file.isDirectory()
+                );
+            }
+
+            const packsTmp = folders.map(folder => {
+                const filePath = path.join(PACK_DEST, `${folder.name}.db`);
+                fs.rmSync(filePath, { force: true });
+                const db = fs.createWriteStream(filePath, { flags: "a", mode: 0o664 });
+                const data = [];
+                logger.info(`Compiling pack ${folder.name}`);
+                return gulp.src(path.join(directoryToCheck, folder.name, "/**/*.json"))
+                // return gulp.src(path.join(PACK_SRC, folder.name, "/**/*.json"))
+                    .pipe(through2.obj((file, enc, callback) => {
+                    const json = JSON.parse(file.contents.toString());
+                    cleanPackEntry(json);
+                    data.push(json);
+                    callback(null, file);
+                    }, callback => {
+                    data.sort((lhs, rhs) => lhs._id > rhs._id ? 1 : -1);
+                    data.forEach(entry => db.write(`${JSON.stringify(entry)}\n`));
+                    callback();
+                }));
+            });
+            packs.push(packsTmp);
+        }
         return mergeStream(packs);
     }
     exports.compilePacks = compilePacks;
@@ -247,27 +281,46 @@ const logger = require("fancy-log");
         const packs = gulp.src(`${PACK_DEST}/**/${packName}.db`)
         .pipe(through2.obj((file, enc, callback) => {
             const filename = path.parse(file.path).name;
-            const folder = path.join(PACK_SRC, filename);
-            if ( !fs.existsSync(folder) ) fs.mkdirSync(folder, { recursive: true, mode: 0o775 });
+            // const folder = path.join(PACK_SRC, filename);
+            for(const directoryToCheck of PACK_SOURCES) {
+                logger.info(`extractPacks => directoryToCheck = ${directoryToCheck}`);
+                let folders = [];
+                if(packName) {
+                    folders = fs.readdirSync(directoryToCheck, { withFileTypes: true }).filter(file =>
+                        file.isDirectory() && ( !packName || (packName === file.name) )
+                    );
+                } else {
+                    folders = fs.readdirSync(directoryToCheck, { withFileTypes: true }).filter(file =>
+                        file.isDirectory()
+                    );
+                }
+                for(const folder of folders) {
+                    logger.info(`extractPacks( => folder = ${folder}`);
 
-            const db = new Datastore({ filename: file.path, autoload: true });
-            db.loadDatabase();
+                    if ( !fs.existsSync(folder) ) {
+                        fs.mkdirSync(folder, { recursive: true, mode: 0o775 });
+                    }
 
-            db.find({}, (err, entries) => {
-            entries.forEach(entry => {
-                const name = entry.name.toLowerCase();
-                if ( entryName && (entryName !== name) ) return;
-                cleanPackEntry(entry);
-                const output = `${JSON.stringify(entry, null, 2)}\n`;
-                const outputName = name.replace("'", "").replace(/[^a-z0-9]+/gi, " ").trim().replace(/\s+|-{2,}/g, "-");
-                const subfolder = path.join(folder, _getSubfolderName(entry, filename));
-                if ( !fs.existsSync(subfolder) ) fs.mkdirSync(subfolder, { recursive: true, mode: 0o775 });
-                fs.writeFileSync(path.join(subfolder, `${outputName}.json`), output, { mode: 0o664 });
-            });
-            });
+                    const db = new Datastore({ filename: file.path, autoload: true });
+                    db.loadDatabase();
 
-            logger.info(`Extracting pack ${filename}`);
-            callback(null, file);
+                    db.find({}, (err, entries) => {
+                    entries.forEach(entry => {
+                        const name = entry.name.toLowerCase();
+                        if ( entryName && (entryName !== name) ) return;
+                        cleanPackEntry(entry);
+                        const output = `${JSON.stringify(entry, null, 2)}\n`;
+                        const outputName = name.replace("'", "").replace(/[^a-z0-9]+/gi, " ").trim().replace(/\s+|-{2,}/g, "-");
+                        const subfolder = path.join(folder, _getSubfolderName(entry, filename));
+                        if ( !fs.existsSync(subfolder) ) fs.mkdirSync(subfolder, { recursive: true, mode: 0o775 });
+                        fs.writeFileSync(path.join(subfolder, `${outputName}.json`), output, { mode: 0o664 });
+                    });
+                    });
+
+                    logger.info(`Extracting pack ${filename}`);
+                    callback(null, file);
+                }
+            }
         }));
 
         return mergeStream(packs);
@@ -417,71 +470,77 @@ const logger = require("fancy-log");
      * @returns
      */
     async function prepareJsons() {
-        // const compendiums = ["5e"];
-        const packName = "generic";// TODO parsedArgs.pack;
-        const entryName = "generic"; // TODO parsedArgs.name?.toLowerCase();
-        logger.info(`prepareJsons => parsedArgs.pack = ${parsedArgs.pack}`);
-        logger.info(`prepareJsons => entryName = ${entryName}`);
+        const packName = parsedArgs.pack ?? undefined;
+        // const entryName = parsedArgs.name?.toLowerCase() ?? undefined;
+        // logger.info(`prepareJsons => parsedArgs.pack = ${parsedArgs.pack}`);
+        // logger.info(`prepareJsons => entryName = ${entryName}`);
 
-        const directoryToCheck = PACK_SRC;
-        logger.info(`prepareJsons => directoryToCheck = ${directoryToCheck}`);
+        for(const directoryToCheck of PACK_SOURCES) {
+            logger.info(`prepareJsons => directoryToCheck = ${directoryToCheck}`);
 
-        const folders = fs.readdirSync(directoryToCheck, { withFileTypes: true }).filter(file =>
-            file.isDirectory() && ( !packName || (packName === file.name) )
-        );
-        if(!folders || folders.length <= 0){
-            return Promise.resolve(`not done`);
-        }
-        logger.info(`prepareJsons => folders ${JSON.stringify(folders[0])}`);
-        const folderPath = directoryToCheck+"/"+folders[0].name; // e.g. generic
-        logger.info(`prepareJsons => folderPath = ${folderPath}`);
-        const filesJs = fs.readdirSync(folderPath, { withFileTypes: true }).filter((file) => {
-                // logger.info(file.name + " => " + path.extname(file.name));
-                return !file.isDirectory() && path.extname(file.name).toLowerCase() === `.js`;
-            }
-        );
-        logger.info(`prepareJsons => filesJs ${filesJs?.length}`);
-        const filesJson = fs.readdirSync(folderPath, { withFileTypes: true }).filter((file) => {
-                // logger.info(file.name + " => " + path.extname(file.name));
-                return !file.isDirectory() && path.extname(file.name).toLowerCase() === `.json`;
-            }
-        );
-        logger.info(`prepareJsons => filesJson ${filesJson?.length}`);
-        logger.info(`Readed files`);
-        const packs = folders.map(folder => {
-            logger.info(`Cleaning pack ${folder.name}`);
-            filesJs.map((fileJs) => {
-                const transformedFile = fileJs.name;
-                let fileName = transformedFile.substring(
-                    transformedFile.lastIndexOf("/"),
-                    transformedFile.lastIndexOf(".")
+            let folders = [];
+            if(packName) {
+                folders = fs.readdirSync(directoryToCheck, { withFileTypes: true }).filter(file =>
+                    file.isDirectory() && ( !packName || (packName === file.name) )
                 );
-                let jsonFilePath = `${fileName}.json`;
-                // logger.info(`prepareJsons => fileJs = ${fileName}`);
-                // logger.info(`prepareJsons => fileJs = ${jsonFilePath}`);
-                filesJson.map(async fileJson => {
-                    let fileNameJson = fileJson.name;
-                    // logger.info(`prepareJsons  => fileJson = ${fileNameJson}`);
-                    if(jsonFilePath === fileNameJson){
-                        // logger.info(`prepareJsons => Found = ${fileNameJson}`);
-                        // logger.info(`prepareJsons => Load Js = ${folderPath+"/"+fileJs.name}`);
-                        const javascriptContent = new String(fs.readFileSync(folderPath+"/"+fileJs.name));
-                        // logger.info(`prepareJsons => Load Json = ${folderPath+"/"+fileJson.name}`);
-                        const jsonObj = JSON.parse(fs.readFileSync(folderPath+"/"+fileJson.name));
-                        // logger.info(`prepareJsons => fileJson.contents = ${JSON.stringify(jsonObj)}`);
-                        // logger.info(`prepareJsons  => cleanPackEntry(`);
-                        cleanPackEntry(jsonObj);
-                        // logger.info(`prepareJsons  => cleanedPackEntry(`);
-                        if ( !jsonObj._id ) {
-                            jsonObj._id = await determineId(jsonObj, folder.name);
-                        }
-                        jsonObj.command = javascriptContent;
-                        // fs.rmSync(fileJson.path, { force: true });
-                        fs.writeFileSync(folderPath+"/"+fileJson.name, `${JSON.stringify(jsonObj, null, 2)}\n`, { mode: 0o664 });
+            } else {
+                folders = fs.readdirSync(directoryToCheck, { withFileTypes: true }).filter(file =>
+                    file.isDirectory()
+                );
+            }
+            if(folders && folders.length > 0){
+                logger.info(`prepareJsons => folders ${JSON.stringify(folders[0])}`);
+                const folderPath = directoryToCheck+"/"+folders[0].name; // e.g. generic
+                logger.info(`prepareJsons => folderPath = ${folderPath}`);
+                const filesJs = fs.readdirSync(folderPath, { withFileTypes: true }).filter((file) => {
+                        // logger.info(file.name + " => " + path.extname(file.name));
+                        return !file.isDirectory() && path.extname(file.name).toLowerCase() === `.js`;
                     }
+                );
+                logger.info(`prepareJsons => filesJs ${filesJs?.length}`);
+                const filesJson = fs.readdirSync(folderPath, { withFileTypes: true }).filter((file) => {
+                        // logger.info(file.name + " => " + path.extname(file.name));
+                        return !file.isDirectory() && path.extname(file.name).toLowerCase() === `.json`;
+                    }
+                );
+                logger.info(`prepareJsons => filesJson ${filesJson?.length}`);
+                logger.info(`Readed files`);
+                const packs = folders.map(folder => {
+                    logger.info(`Cleaning pack ${folder.name}`);
+                    filesJs.map((fileJs) => {
+                        const transformedFile = fileJs.name;
+                        let fileName = transformedFile.substring(
+                            transformedFile.lastIndexOf("/"),
+                            transformedFile.lastIndexOf(".")
+                        );
+                        let jsonFilePath = `${fileName}.json`;
+                        // logger.info(`prepareJsons => fileJs = ${fileName}`);
+                        // logger.info(`prepareJsons => fileJs = ${jsonFilePath}`);
+                        filesJson.map(async fileJson => {
+                            let fileNameJson = fileJson.name;
+                            // logger.info(`prepareJsons  => fileJson = ${fileNameJson}`);
+                            if(jsonFilePath === fileNameJson){
+                                // logger.info(`prepareJsons => Found = ${fileNameJson}`);
+                                // logger.info(`prepareJsons => Load Js = ${folderPath+"/"+fileJs.name}`);
+                                const javascriptContent = new String(fs.readFileSync(folderPath+"/"+fileJs.name));
+                                // logger.info(`prepareJsons => Load Json = ${folderPath+"/"+fileJson.name}`);
+                                const jsonObj = JSON.parse(fs.readFileSync(folderPath+"/"+fileJson.name));
+                                // logger.info(`prepareJsons => fileJson.contents = ${JSON.stringify(jsonObj)}`);
+                                // logger.info(`prepareJsons  => cleanPackEntry(`);
+                                cleanPackEntry(jsonObj);
+                                // logger.info(`prepareJsons  => cleanedPackEntry(`);
+                                if ( !jsonObj._id ) {
+                                    jsonObj._id = await determineId(jsonObj, folder.name);
+                                }
+                                jsonObj.command = javascriptContent;
+                                // fs.rmSync(fileJson.path, { force: true });
+                                fs.writeFileSync(folderPath+"/"+fileJson.name, `${JSON.stringify(jsonObj, null, 2)}\n`, { mode: 0o664 });
+                            }
+                        });
+                    });
                 });
-            });
-        });
+            }
+        }
         return Promise.resolve(`done`);
     }
     exports.prepareJsons = prepareJsons;
