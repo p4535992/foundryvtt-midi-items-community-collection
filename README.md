@@ -1,18 +1,18 @@
 # Midi Items Community Collection
 
-![GitHub issues](https://img.shields.io/github/issues-raw/p4535992/foundryvtt-midi-items-community-collection?style=for-the-badge)
+![GitHub issues](https://img.shields.io/github/issues-raw/p4535992/foundryvtt-community-macros-variant?style=for-the-badge)
 
-![Latest Release Download Count](https://img.shields.io/github/downloads/p4535992/foundryvtt-midi-items-community-collection/latest/module.zip?color=2b82fc&label=DOWNLOADS&style=for-the-badge)
+![Latest Release Download Count](https://img.shields.io/github/downloads/p4535992/foundryvtt-community-macros-variant/latest/module.zip?color=2b82fc&label=DOWNLOADS&style=for-the-badge)
 
 [![Forge Installs](https://img.shields.io/badge/dynamic/json?label=Forge%20Installs&query=package.installs&suffix=%25&url=https%3A%2F%2Fforge-vtt.com%2Fapi%2Fbazaar%2Fpackage%2Fmidi-items-community&colorB=006400&style=for-the-badge)](https://forge-vtt.com/bazaar#package=midi-items-community)
 
-![Foundry Core Compatible Version](https://img.shields.io/badge/dynamic/json.svg?url=https%3A%2F%2Fraw.githubusercontent.com%2Fp4535992%2Ffoundryvtt-midi-items-community-collection%2Fmaster%2Fsrc%2Fmodule.json&label=Foundry%20Version&query=$.compatibleCoreVersion&colorB=orange&style=for-the-badge)
+![Foundry Core Compatible Version](https://img.shields.io/badge/dynamic/json.svg?url=https%3A%2F%2Fraw.githubusercontent.com%2Fp4535992%2Ffoundryvtt-community-macros-variant%2Fmaster%2Fsrc%2Fmodule.json&label=Foundry%20Version&query=$.compatibleCoreVersion&colorB=orange&style=for-the-badge)
 
-![Latest Version](https://img.shields.io/badge/dynamic/json.svg?url=https%3A%2F%2Fraw.githubusercontent.com%2Fp4535992%2Ffoundryvtt-midi-items-community-collection%2Fmaster%2Fsrc%2Fmodule.json&label=Latest%20Release&prefix=v&query=$.version&colorB=red&style=for-the-badge)
+![Latest Version](https://img.shields.io/badge/dynamic/json.svg?url=https%3A%2F%2Fraw.githubusercontent.com%2Fp4535992%2Ffoundryvtt-community-macros-variant%2Fmaster%2Fsrc%2Fmodule.json&label=Latest%20Release&prefix=v&query=$.version&colorB=red&style=for-the-badge)
 
 [![Foundry Hub Endorsements](https://img.shields.io/endpoint?logoColor=white&url=https%3A%2F%2Fwww.foundryvtt-hub.com%2Fwp-json%2Fhubapi%2Fv1%2Fpackage%2Fmidi-items-community%2Fshield%2Fendorsements&style=for-the-badge)](https://www.foundryvtt-hub.com/package/midi-items-community/)
 
-![GitHub all releases](https://img.shields.io/github/downloads/p4535992/foundryvtt-midi-items-community-collection/total?style=for-the-badge)
+![GitHub all releases](https://img.shields.io/github/downloads/p4535992/foundryvtt-community-macros-variant/total?style=for-the-badge)
 
 A compendium pack for items, feats etc configured for use with Dynamic Active Effects (DAE) as well as Midi QOL.
 
@@ -32,7 +32,7 @@ To install this module manually:
 1.  Inside the Foundry "Configuration and Setup" screen, click "Add-on Modules"
 2.  Click "Install Module"
 3.  In the "Manifest URL" field, paste the following url:
-`https://raw.githubusercontent.com/p4535992/foundryvtt-midi-items-community-collection/master/module.json`
+`https://raw.githubusercontent.com/p4535992/foundryvtt-community-macros-variant/master/module.json`
 4.  Click 'Install' and wait for installation to complete
 5.  Don't forget to enable the module in game using the "Manage Module" button
 
@@ -56,11 +56,14 @@ To install this module manually:
 
 To simplify the creation of packs with a github action activate during the creation of the release we can use this method:
 
-1. Go under a macros folder like `dnd5e`
-2. Choose a macro like `stealth_check.js` an create a new json file with the same base name `stealth_check.json`
-3. Prepare a json structure for your macro entry:
+1. Go under a macros system folder like `dnd5e` on the base directory of the project
+2. Select a sub directory or create a new one like `spells-dnd5e`
+3. Choose a macro to update like `stealth_check.js` an create a new json file with the same base name `stealth_check.json` if is absent, or create a new macro just make sure to create a json file with the same base name on the same directory.
+4. Launch the command `npm run-script build` and everything is ready to be packaged for the release.
 
-Here a json example:
+### How Prepare a json structure for your macro entry ?
+
+Here a very basic json example:
 
 ```json
 {
@@ -69,31 +72,18 @@ Here a json example:
   "type":"script",
   "flags":{},
   "scope":"global",
-  "command":"", // HERE IS WHERE THE ACTION PROCESS WILL PUT THE TEXT OF THE MACRO
+  "command":"", // HERE IS WHERE THE ACTION PROCESS WILL COPY THE TEXT OF THE MACRO (THE JAVASCRIPT FILE)
   "author":"",
   "img":"icons/svg/dice-target.svg",
   "actorIds":[],
-  "_id":"2RitOkKtnQe9pbuF"  // THIS IS OPTIONAL BUT ESSENTIAL IF YOU WANT TO MAINTAIN THE REFERENCE OR NEDB WILL CREATE A NEW ONE
+  "_id":"2RitOkKtnQe9pbuF"  // THIS IS THE ID TO ASSIGN TO THE MACRO, IS OPTIONAL BUT ESSENTIAL IF YOU WANT TO MAINTAIN THE REFERENCE OR NEDB WILL CREATE A NEW ONE
 }
 ```
 
-**Point 2 and 3 are optional** if no javascript file is founded we use the generic json model `generic_macro.json`, the '_id' attribute will be generated from the nedb library, here the example:
+**NOTE:** if no javascript file is founded it will be ignored and it will be not present on the db
 
-```json
-{
-  "name": "<NAME OF THE FILE MACRO JAVASCRIPT>",
-  "permission":{"default":0 },
-  "type":"script",
-  "flags":{},
-  "scope":"global",
-  "command":"", // HERE IS WHERE THE ACTION PROCESS WILL PUT THE TEXT OF THE MACRO
-  "author":"",
-  "img":"icons/svg/dice-target.svg",
-  "actorIds":[]
-}
-```
 
-## Other macro repositories with some good macros from the community
+## Other macros repositories with some good macros from the community, some of their work is been putted here
 
 - [Kekilla0 Personal-Macros](https://github.com/Kekilla0/Personal-Macros)
 - [Otigon Foundry-Macros](https://github.com/otigon/Foundry-Macros)
@@ -180,7 +170,7 @@ npm run-script package
 
 ## Issues
 
-Any issues, bugs, or feature requests are always welcome to be reported directly to the [Issue Tracker](https://github.com/p4535992/foundryvtt-midi-items-community-collection/issues ), or using the [Bug Reporter Module](https://foundryvtt.com/packages/bug-reporter/).
+Any issues, bugs, or feature requests are always welcome to be reported directly to the [Issue Tracker](https://github.com/p4535992/foundryvtt-community-macros-variant/issues ), or using the [Bug Reporter Module](https://foundryvtt.com/packages/bug-reporter/).
 
 ## License
 

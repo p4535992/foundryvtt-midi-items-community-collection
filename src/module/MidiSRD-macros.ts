@@ -340,9 +340,9 @@ export class MidiMacros {
 					name: "Arcane Hand",
 					//@ts-ignore
 					"system.attributes.hp": {
-                         //@ts-ignore
+						//@ts-ignore
 						value: actor.system.attributes.hp.max,
-                        //@ts-ignore
+						//@ts-ignore
 						max: actor.system.attributes.hp.max,
 					},
 				},
@@ -1018,10 +1018,9 @@ export class MidiMacros {
 	}
 
 	static async removeWalls(actor: Actor) {
-		const darkWalls = <Wall[]>(
-            //@ts-ignore
-			canvas.walls?.placeables.filter((w) => w.data.flags["midi-items-community"]?.Darkness?.ActorId === actor.id)
-		);
+		const darkWalls = <
+			Wall[] //@ts-ignore
+		>canvas.walls?.placeables.filter((w) => w.data.flags["midi-items-community"]?.Darkness?.ActorId === actor.id);
 		const wallArray = darkWalls.map(function (w) {
 			return w.data._id;
 		});
@@ -1568,7 +1567,7 @@ export class MidiMacros {
 			await ChatMessage.create({ content: "Fire Shield expires on " + actor.name });
 			//@ts-ignore
 			await DAE.unsetFlag(actor, "FireShield");
-            //@ts-ignore
+			//@ts-ignore
 			await actor.deleteEmbeddedDocuments("Item", [item.id]);
 		}
 	}
@@ -1664,7 +1663,7 @@ export class MidiMacros {
 			}
 			//@ts-ignore
 			const flavor = `${CONFIG.DND5E.abilities[saveData.ability]} DC${dc} ${DAEItem?.name || ""}`;
-            //@ts-ignore
+			//@ts-ignore
 			const saveRoll = (await actor.rollAbilitySave(saveData.ability, { flavor, fastForward: true })).total;
 
 			if (saveRoll < dc) {
@@ -1826,7 +1825,7 @@ export class MidiMacros {
 			await ChatMessage.create({ content: "Heroism ends" });
 		}
 		if (args[0] === "each") {
-            //@ts-ignore
+			//@ts-ignore
 			const bonus = mod > actor.system.attributes.hp.temp ? mod : actor.system.attributes.hp.temp;
 			await actor.update({ "system.attributes.hp.temp": mod });
 			await ChatMessage.create({ content: "Heroism continues on " + actor.name });
@@ -1841,28 +1840,28 @@ export class MidiMacros {
 		const caster = canvas.tokens?.placeables?.find((token) => token?.actor?.items.get(DAEItem._id) != null);
 
 		if (args[0] === "on") {
-            //@ts-ignore
+			//@ts-ignore
 			if (actor.system.abilities.int.value < 4) {
-                //@ts-ignore
-                actor.deleteEmbeddedEntity("ActiveEffect", lArgs.efData._id);
-            }
-            //@ts-ignore
+				//@ts-ignore
+				actor.deleteEmbeddedEntity("ActiveEffect", lArgs.efData._id);
+			}
+			//@ts-ignore
 			RollHideousSave(target);
 		}
 
 		async function RollHideousSave(target) {
 			console.log("SetHook");
-            //@ts-ignore
+			//@ts-ignore
 			const hookId = Hooks.on("preUpdateActor", async (actor, update) => {
-                //@ts-ignore
+				//@ts-ignore
 				if (!"actorData.system.attributes.hp" in update) {
-                    return;
-                }
+					return;
+				}
 				const oldHP = actor.system.attributes.hp.value;
 				const newHP = getProperty(update, "system.attributes.hp.value");
 				const hpChange = oldHP - newHP;
 				if (hpChange > 0 && typeof hpChange === "number") {
-                    //@ts-ignore
+					//@ts-ignore
 					const flavor = `${CONFIG.DND5E.abilities["wis"]} DC${saveData.dc} ${DAEItem?.name || ""}`;
 					const saveRoll = (
 						await actor.rollAbilitySave(saveData.ability, { flavor, fastForward: true, advantage: true })
@@ -1872,29 +1871,29 @@ export class MidiMacros {
 				}
 			});
 			if (args[0] !== "on") {
-                //@ts-ignore
+				//@ts-ignore
 				const flavor = `${CONFIG.DND5E.abilities["wis"]} DC${saveData.dc} ${DAEItem?.name || ""}`;
-                //@ts-ignore
+				//@ts-ignore
 				const saveRoll = (await actor.rollAbilitySave(saveData.ability, { flavor })).total;
 				if (saveRoll >= saveData.dc) {
 					actor.deleteEmbeddedDocuments("ActiveEffect", [lArgs.efData._id]);
 				}
 			}
-            //@ts-ignore
+			//@ts-ignore
 			await DAE.setFlag(actor, "hideousLaughterHook", hookId);
 		}
 
 		async function RemoveHook() {
-            //@ts-ignore
+			//@ts-ignore
 			const flag = await DAE.getFlag(actor, "hideousLaughterHook");
 			Hooks.off("preUpdateActor", flag);
-            //@ts-ignore
+			//@ts-ignore
 			await DAE.unsetFlag(actor, "hideousLaughterHook");
-            //@ts-ignore
+			//@ts-ignore
 			if (args[0] === "off") {
-                //@ts-ignore
-                game.cub.addCondition("Prone", actor);
-            }
+				//@ts-ignore
+				game.cub.addCondition("Prone", actor);
+			}
 		}
 
 		if (args[0] === "off") {
@@ -1903,7 +1902,7 @@ export class MidiMacros {
 
 		if (args[0] === "each") {
 			await RemoveHook();
-            //@ts-ignore
+			//@ts-ignore
 			await RollHideousSave();
 		}
 	}
@@ -1913,18 +1912,18 @@ export class MidiMacros {
 		const DAEItem = lArgs.efData.flags.dae.itemData;
 		const saveData = DAEItem.data.save;
 		const DC = args[1];
-        //@ts-ignore
+		//@ts-ignore
 		if (args[0] === "each") {
-            //@ts-ignore
+			//@ts-ignore
 			new Dialog({
 				title: "Use action to make a wisdom save to end Irresistible Dance?",
 				buttons: {
 					one: {
 						label: "Yes",
 						callback: async () => {
-                            //@ts-ignore
+							//@ts-ignore
 							const flavor = `${CONFIG.DND5E.abilities[saveData.ability]} DC${DC} ${DAEItem?.name || ""}`;
-                            //@ts-ignore
+							//@ts-ignore
 							const saveRoll = (await actor.rollAbilitySave(saveData.ability, { flavor })).total;
 
 							if (saveRoll >= DC) {
@@ -1949,15 +1948,15 @@ export class MidiMacros {
 			ui.notifications.error("Please enable the Advanced Macros module");
 		const { actor, token, lArgs } = MidiMacros.targets(args);
 		if (args[0] === "on") {
-            //@ts-ignore
+			//@ts-ignore
 			await ChatMessage.create({ content: `${token.name} is levitated 20ft` });
-            //@ts-ignore
+			//@ts-ignore
 			await token.document.update({ elevation: 20 });
 		}
 		if (args[0] === "off") {
-            //@ts-ignore
+			//@ts-ignore
 			await token.document.update({ elevation: 0 });
-            //@ts-ignore
+			//@ts-ignore
 			await ChatMessage.create({ content: `${token.name} is returned to the ground` });
 		}
 	}
@@ -1993,7 +1992,7 @@ export class MidiMacros {
                 </div>
                 </form>
                 `;
-            //@ts-ignore
+			//@ts-ignore
 			new Dialog({
 				content,
 				buttons: {
@@ -2005,35 +2004,35 @@ export class MidiMacros {
 							const copy_item = duplicate(weaponItem);
 							const spellLevel = Math.floor(DAEItem.data.level / 2);
 							const bonus = value_limit(spellLevel, 1, 3);
-                            //@ts-ignore
+							//@ts-ignore
 							const wpDamage = copy_item.system.damage.parts[0][0];
-                            //@ts-ignore
+							//@ts-ignore
 							const verDamage = copy_item.system.damage.versatile;
-                            //@ts-ignore
+							//@ts-ignore
 							await DAE.setFlag(actor, `magicWeapon`, {
-                                //@ts-ignore
+								//@ts-ignore
 								damage: weaponItem.system.attackBonus,
 								weapon: itemId,
 								weaponDmg: wpDamage,
 								verDmg: verDamage,
-                                //@ts-ignore
+								//@ts-ignore
 								mgc: copy_item.system.properties.mgc,
 							});
-                            //@ts-ignore
+							//@ts-ignore
 							if (copy_item.system.attackBonus === "") {
-                                //@ts-ignore
-                                copy_item.system.attackBonus = "0";
-                            }
-                            //@ts-ignore
+								//@ts-ignore
+								copy_item.system.attackBonus = "0";
+							}
+							//@ts-ignore
 							copy_item.system.attackBonus = `${parseInt(copy_item.system.attackBonus) + bonus}`;
-                            //@ts-ignore
+							//@ts-ignore
 							copy_item.system.damage.parts[0][0] = wpDamage + " + " + bonus;
-                            //@ts-ignore
+							//@ts-ignore
 							copy_item.system.properties.mgc = true;
-							if (verDamage !== "" && verDamage !== null){
-                                //@ts-ignore
+							if (verDamage !== "" && verDamage !== null) {
+								//@ts-ignore
 								copy_item.system.damage.versatile = verDamage + " + " + bonus;
-                            }
+							}
 							await actor.updateEmbeddedDocuments("Item", [copy_item]);
 						},
 					},
@@ -2046,22 +2045,22 @@ export class MidiMacros {
 
 		//Revert weapon and unset flag.
 		if (args[0] === "off") {
-            //@ts-ignore
+			//@ts-ignore
 			const { damage, weapon, weaponDmg, verDmg, mgc } = DAE.getFlag(actor, "magicWeapon");
 			const weaponItem = actor.items.get(weapon);
 			const copy_item = duplicate(weaponItem);
-            //@ts-ignore
+			//@ts-ignore
 			copy_item.system.attackBonus = damage;
-            //@ts-ignore
+			//@ts-ignore
 			copy_item.system.damage.parts[0][0] = weaponDmg;
-            //@ts-ignore
+			//@ts-ignore
 			copy_item.system.properties.mgc = mgc;
 			if (verDmg !== "" && verDmg !== null) {
-                //@ts-ignore
-                copy_item.system.damage.versatile = verDmg;
-            }
+				//@ts-ignore
+				copy_item.system.damage.versatile = verDmg;
+			}
 			await actor.updateEmbeddedDocuments("Item", [copy_item]);
-            //@ts-ignore
+			//@ts-ignore
 			await DAE.unsetFlag(actor, `magicWeapon`);
 		}
 	}
@@ -2076,9 +2075,9 @@ export class MidiMacros {
 				{
 					t: "circle",
 					user: game.user?.id,
-                    //@ts-ignore
+					//@ts-ignore
 					x: token.x + <number>canvas.grid?.size / 2,
-                    //@ts-ignore
+					//@ts-ignore
 					y: token.y + <number>canvas.grid?.size / 2,
 					direction: 0,
 					distance: 30,
@@ -2101,7 +2100,7 @@ export class MidiMacros {
 				MidiMacros.templateCreation(templateData, actor);
 				async function deleteTemplatesAndMove(template) {
 					MidiMacros.deleteTemplates("MistyStep", actor);
-                    //@ts-ignore
+					//@ts-ignore
 					await token?.document.update({ x: template.data.x, y: template.data.y }, { animate: false });
 					await actor.deleteEmbeddedDocuments("ActiveEffect", [lArgs.effectId]);
 				}
@@ -2123,9 +2122,9 @@ export class MidiMacros {
 				{
 					t: "circle",
 					user: game.user?.id,
-                    //@ts-ignore
+					//@ts-ignore
 					x: token.x + canvas.grid.size / 2,
-                    //@ts-ignore
+					//@ts-ignore
 					y: token.y + canvas.grid.size / 2,
 					direction: 0,
 					distance: 60,
@@ -2146,7 +2145,7 @@ export class MidiMacros {
 					},
 					fillColor: game.user?.color,
 				};
-                //@ts-ignore
+				//@ts-ignore
 				Hooks.once("createMeasuredTemplate", MidiMacros.deleteTemplates("MoonbeamRange", actor));
 				MidiMacros.templateCreation(templateData, actor);
 			});
@@ -2235,11 +2234,11 @@ export class MidiMacros {
 						label: "Yes",
 						callback: async (html) => {
 							const element = $("input[type='radio'][name='type']:checked").val();
-                            //@ts-ignore
+							//@ts-ignore
 							const resistances = actor.system.traits.dr.value;
 							resistances.push(element);
 							await actor.update({ "data.traits.dr.value": resistances });
-                            //@ts-ignore
+							//@ts-ignore
 							await DAE.setFlag(actor, "ProtectionFromEnergy", element);
 							await ChatMessage.create({ content: `${actor.name} gains resistance to ${element}` });
 						},
@@ -2248,14 +2247,14 @@ export class MidiMacros {
 			}).render(true, { width: 400 });
 		}
 		if (args[0] === "off") {
-            //@ts-ignore
+			//@ts-ignore
 			const element = DAE.getFlag(actor, "ProtectionFromEnergy");
-            //@ts-ignore
+			//@ts-ignore
 			const resistances = actor.system.traits.dr.value;
 			const index = resistances.indexOf(element);
 			resistances.splice(index, 1);
 			await actor.update({ "data.traits.dr.value": resistances });
-            //@ts-ignore
+			//@ts-ignore
 			await DAE.unsetFlag(actor, "ProtectionFromEnergy");
 			await ChatMessage.create({ content: `${actor.name} loses resistance to ${element}` });
 		}
@@ -2271,18 +2270,18 @@ export class MidiMacros {
 		 * For every str weapon, update the damage formulas to half the damage, set flag of original
 		 */
 		if (args[0] === "on") {
-            //@ts-ignore
+			//@ts-ignore
 			for (const weapon of weapons) {
-                //@ts-ignore
+				//@ts-ignore
 				if (weapon.abilityMod === "str") {
-                    //@ts-ignore
+					//@ts-ignore
 					const newWeaponParts = duplicate(weapon.system.damage.parts);
 					await weapon.setFlag("world", "RayOfEnfeeblement", newWeaponParts);
-                    //@ts-ignore
+					//@ts-ignore
 					for (const part of weapon.system.damage.parts) {
 						part[0] = `floor((${part[0]})/2)`;
 					}
-                    //@ts-ignore
+					//@ts-ignore
 					await weapon.update({ "system.damage.parts": weapon.system.damage.parts });
 				}
 			}
@@ -2306,12 +2305,12 @@ export class MidiMacros {
 			// If 6s elapses, update HP by one
 			const timeHookId = Hooks.on("updateWorldTime", async (currentTime, updateInterval) => {
 				const effect = actor.effects.find((i) => i.data.label === "Regenerate");
-                //@ts-ignore
+				//@ts-ignore
 				const applyTime = effect.data.duration.startTime;
-                //@ts-ignore
+				//@ts-ignore
 				const expireTime = applyTime + effect.data.duration.seconds;
 				const healing = roundCount(currentTime, updateInterval, applyTime, expireTime);
-                //@ts-ignore
+				//@ts-ignore
 				await actor.applyDamage(-healing);
 				await ChatMessage.create({ content: `${actor.name} gains 1 hp` });
 			});
@@ -2324,7 +2323,7 @@ export class MidiMacros {
 		if (args[0] === "off") {
 			async function RegenerateOff() {
 				const flag = await actor.getFlag("world", "Regenerate");
-                //@ts-ignore
+				//@ts-ignore
 				Hooks.off("updateWorldTime", flag.timeHook);
 				await actor.unsetFlag("world", "Regenerate");
 				console.log("Regenerate removed");
@@ -2366,12 +2365,10 @@ export class MidiMacros {
 	static async shillelagh(args) {
 		const { actor, token, lArgs } = MidiMacros.targets(args);
 		// we see if the equipped weapons have base weapon set and filter on that, otherwise we just get all weapons
-		const filteredWeapons = actor.items.filter(
-			(i) => {
-                //@ts-ignore
-				return i.data.type === "weapon" && (i.system.baseItem === "club" || i.system.baseItem === "quarterstaff")
-            }
-		);
+		const filteredWeapons = actor.items.filter((i) => {
+			//@ts-ignore
+			return i.data.type === "weapon" && (i.system.baseItem === "club" || i.system.baseItem === "quarterstaff");
+		});
 		const weapons =
 			filteredWeapons.length > 0 ? filteredWeapons : actor.items.filter((i) => i.data.type === "weapon");
 
@@ -2394,32 +2391,32 @@ export class MidiMacros {
 					Ok: {
 						label: "Ok",
 						callback: async (html) => {
-                            //@ts-ignore
+							//@ts-ignore
 							const itemId = html.find("[name=weapons]")[0].value;
 							const weaponItem = actor.getEmbeddedDocument("Item", itemId);
 							const weaponCopy = duplicate(weaponItem);
-                            //@ts-ignore
+							//@ts-ignore
 							await DAE.setFlag(actor, "shillelagh", {
 								id: itemId,
-                                //@ts-ignore
+								//@ts-ignore
 								name: weaponItem.name,
-                                //@ts-ignore
+								//@ts-ignore
 								damage: weaponItem.system.damage.parts[0][0],
-                                //@ts-ignore
+								//@ts-ignore
 								ability: weaponItem.system.ability,
-                                //@ts-ignore
+								//@ts-ignore
 								magical: getProperty(weaponItem, "system.properties.mgc") || false,
 							});
-                            //@ts-ignore
+							//@ts-ignore
 							const damage = weaponCopy.system.damage.parts[0][0];
-                            //@ts-ignore
+							//@ts-ignore
 							const targetAbilities = actor.system.abilities;
-                            //@ts-ignore
+							//@ts-ignore
 							weaponCopy.system.damage.parts[0][0] = damage.replace(/1d(4|6)/g, "1d8");
 							if (targetAbilities.wis.value > targetAbilities.str.value) {
-                                weaponCopy.data.ability = "wis";
-                            }
-                            //@ts-ignore
+								weaponCopy.data.ability = "wis";
+							}
+							//@ts-ignore
 							weaponCopy.name = weaponItem.name + " [Shillelagh]";
 							setProperty(weaponCopy, "system.properties.mgc", true);
 							await actor.updateEmbeddedDocuments("Item", [weaponCopy]);
@@ -2436,7 +2433,7 @@ export class MidiMacros {
 		}
 
 		if (args[0] === "off") {
-             //@ts-ignore
+			//@ts-ignore
 			const flag = DAE.getFlag(actor, "shillelagh");
 			const weaponItem = actor.getEmbeddedDocument("Item", flag.id);
 			const weaponCopy = duplicate(weaponItem);
@@ -2445,7 +2442,7 @@ export class MidiMacros {
 			weaponCopy.name = flag.name;
 			setProperty(weaponCopy, "system.properties.mgc", flag.magical);
 			await actor.updateEmbeddedDocuments("Item", [weaponCopy]);
-            //@ts-ignore
+			//@ts-ignore
 			await DAE.unsetFlag(target, "shillelagh");
 			await ChatMessage.create({ content: weaponCopy.name + " returns to normal" });
 		}
@@ -2461,9 +2458,9 @@ export class MidiMacros {
 				{
 					t: "circle",
 					user: game.user?.id,
-                    //@ts-ignore
+					//@ts-ignore
 					x: token.x + <number>canvas.grid?.size / 2,
-                     //@ts-ignore
+					//@ts-ignore
 					y: token.y + <number>canvas.grid?.size / 2,
 					direction: 0,
 					distance: 60,
@@ -2483,7 +2480,7 @@ export class MidiMacros {
 					flags: { "midi-items-community": { SpiritualWeapon: { ActorId: actor.id } } },
 					fillColor: game.user?.color,
 				};
-                //@ts-ignore
+				//@ts-ignore
 				Hooks.once("createMeasuredTemplate", MidiMacros.deleteTemplates("SpiritualWeaponRange", actor));
 				MidiMacros.templateCreation(templateData, actor);
 			});
@@ -2549,7 +2546,7 @@ export class MidiMacros {
 			},
 		};
 		const { x, y } = await MidiMacros.warpgateCrosshairs(token, 60, "Unseen Servant", texture, {}, -1);
-        //@ts-ignore
+		//@ts-ignore
 		await warpgate.spawnAt({ x, y }, CONSTANTS.MODULE_NAME, updates, { controllingActor: actor });
 	}
 	static async wardingBond(args) {
@@ -2558,10 +2555,10 @@ export class MidiMacros {
 		const DAEItem = lArgs.efData.flags.dae.itemData;
 		const caster = canvas.tokens?.placeables?.find((token) => token?.actor?.items.get(DAEItem._id) != null);
 		if (args[0] === "on") {
-            //@ts-ignore
+			//@ts-ignore
 			await DAE.setFlag(actor, "WardingBondIds", {
 				tokenID: actor.id,
-                //@ts-ignore
+				//@ts-ignore
 				casterID: caster.actor?.id,
 			});
 			SetWardingBondHook(token);
@@ -2569,35 +2566,35 @@ export class MidiMacros {
 
 		async function SetWardingBondHook(token) {
 			const hookId = Hooks.on("preUpdateActor", async (actor, update) => {
-                //@ts-ignore
+				//@ts-ignore
 				const flag = await DAE.getFlag(actor, "WardingBondIds");
 				if (flag.tokenID !== actor.id) return;
-                //@ts-ignore
+				//@ts-ignore
 				if (!"actorData.system.attributes.hp" in update) return;
 				const oldHP = actor.system.attributes.hp.value;
 				const newHP = getProperty(update, "system.attributes.hp.value");
 				const hpChange = oldHP - newHP;
 				if (hpChange > 0 && typeof hpChange === "number") {
 					const caster = <Token>game.actors?.get(flag.casterID)?.getActiveTokens()[0];
-                    //@ts-ignore
+					//@ts-ignore
 					caster?.actor?.applyDamage(hpChange);
 				}
 			});
-            //@ts-ignore
+			//@ts-ignore
 			await DAE.setFlag(actor, "WardingBondHook", hookId);
 		}
 
 		async function RemoveHook() {
-            //@ts-ignore
+			//@ts-ignore
 			const flag = await DAE.getFlag(actor, "WardingBondHook");
 			Hooks.off("preUpdateActor", flag);
-            //@ts-ignore
+			//@ts-ignore
 			await DAE.unsetFlag(actor, "WardingBondHook");
 		}
 
 		if (args[0] === "off") {
 			RemoveHook();
-            //@ts-ignore
+			//@ts-ignore
 			await DAE.unsetFlag(actor, "WardingBondIds");
 			console.log("Death Ward removed");
 		}

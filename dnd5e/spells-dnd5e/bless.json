@@ -1,0 +1,14 @@
+{
+  "name": "Bless",
+  "permission": {
+    "default": 0
+  },
+  "type": "script",
+  "flags": {},
+  "scope": "global",
+  "command": "// new build for bless macro by Penguin#0949 with help from Kotetsushin#7680\r\n// version beta 4.2.0\r\n\r\n// user notes\r\n// this macro is inteded for use by the recipient of the bless spell in D&D 5e on Forge VTT\r\n// N.B. every recipient will need to use this macro independantly on their own Actor/token.\r\n\r\n//user modifiable declarations CHANGE AT YOUR OWN RISK\r\nconst blessIconPath = 'icons/svg/regen.svg';\r\nlet blessMsg = ' is Blessed!';\r\nlet endblessMsg = ' is no longer Blessed';\r\n\r\n//fixed declarations DO NOT MODIFY\r\nlet macroActor = token.actor;\r\nlet chatMsg = '';\r\nlet Blessd = macroActor.effects.find(i => i.data.label === \"Blessed\")\r\nlet bless = {\r\n    changes: [\r\n        {\r\n            key: \"data.bonuses.mwak.attack\",\r\n            mode: 2,\r\n            priority: 20,\r\n            value: \"+1d4\",\r\n        },\r\n        {\r\n            key: \"data.bonuses.rwak.attack\",\r\n            mode: 2,\r\n            priority: 20,\r\n            value: \"+1d4\",\r\n        },\r\n\t\t{\r\n            key: \"data.bonuses.msak.attack\",\r\n            mode: 2,\r\n            priority: 20,\r\n            value: \"+1d4\",\r\n        },\r\n\t\t{\r\n            key: \"data.bonuses.rsak.attack\",\r\n            mode: 2,\r\n            priority: 20,\r\n            value: \"+1d4\",\r\n        },\r\n\t\t{\r\n            key: \"data.bonuses.abilities.save\",\r\n            mode: 2,\r\n            priority: 20,\r\n            value: \"+1d4\",\r\n        },\r\n    ],\r\n    duration: {\r\n        seconds: 60,\r\n    },\r\n    icon: blessIconPath,\r\n    label: \"Blessed\"\r\n}\r\n//identify token\r\nif (macroActor === undefined || macroActor === null) {\r\n  ui.notifications.warn(\"Please select a token first.\");\r\n} \r\nelse {\r\n// If already bless\t\r\nif (Blessd) {\r\n    macroActor.deleteEmbeddedDocuments(\"ActiveEffect\", [Blessd.id])\r\n// anounce to chat\r\n\tchatMsg = `${macroActor.name} ${endblessMsg}`;\r\n}\r\n// if not already bless\t\r\nelse {\r\n    macroActor.createEmbeddedDocuments(\"ActiveEffect\", [bless])\t\r\n// anounce to chat\r\n\t\tchatMsg = `${macroActor.name} ${blessMsg}`;\r\n}\r\n// write to chat if needed:\r\nif (chatMsg !== '') {\r\n\tlet chatData = {\r\n\t\tuser: game.user._id,\r\n\t\tspeaker: ChatMessage.getSpeaker(),\r\n\t\tcontent: chatMsg\r\n\t};\r\n\tChatMessage.create(chatData, {});\r\n}\r\n}\r\n",
+  "author": "",
+  "img": "icons/svg/dice-target.svg",
+  "actorIds": [],
+  "_id": "50p0yXEpxXa9aAYJ"
+}
