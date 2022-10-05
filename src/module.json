@@ -1,5 +1,5 @@
 {
-	"name": "foundryvtt-community-macros-variant",
+	"id": "foundryvtt-community-macros-variant",
 	"title": "Foundry Community Macros Collection Variant",
 	"description": "Macros for items, features and spells configured for may effects has Dynamic Active Effects, Midi QoL and others modules",
 	"version": "0.3.0",

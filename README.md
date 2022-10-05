@@ -245,8 +245,8 @@ Any issues, bugs, or feature requests are always welcome to be reported directly
 
 ## License
 
-- [Midi-SRD](https://github.com/kandashi/midi-srd) ([MIT](https://github.com/kandashi/midi-srd/blob/master/LICENSE)
-- [Crymic foundry-vtt-macros](https://gitlab.com/crymic/foundry-vtt-macros) ([MIT](https://gitlab.com/crymic/foundry-vtt-macros/-/blob/8.x/LICENSE)
+- [Midi-SRD](https://github.com/kandashi/midi-srd) ([MIT](https://github.com/kandashi/midi-srd/blob/master/LICENSE))
+- [Crymic foundry-vtt-macros](https://gitlab.com/crymic/foundry-vtt-macros) ([MIT](https://gitlab.com/crymic/foundry-vtt-macros/-/blob/8.x/LICENSE))
 
 
 This package is under an [GPLv3 License](LICENSE) and the [Foundry Virtual Tabletop Limited License Agreement for module development](https://foundryvtt.com/article/license/).
