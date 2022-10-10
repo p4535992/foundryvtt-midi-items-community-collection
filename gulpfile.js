@@ -82,7 +82,7 @@ const PACK_DEST = "src/packs";
  * Folder where source JSON files should be located relative to the 5e system folder.
  * @type {string}
  */
-const PACK_SOURCES = ["dnd5e"];
+const PACK_SOURCES = "macros"
 
 /**
  * Cache of DBs so they aren't loaded repeatedly when determining IDs.
@@ -190,9 +190,13 @@ function cleanPacks() {
 	// const folders = fs.readdirSync(PACK_SRC, { withFileTypes: true }).filter(file =>
 	//     file.isDirectory() && ( !packName || (packName === file.name) )
 	// );
+    const macroFolders = fs.readdirSync(PACK_SOURCES, { withFileTypes: true }).filter(file =>
+	    file.isDirectory()
+	);
 	let packs = [];
-	for (const directoryToCheck of PACK_SOURCES) {
-		logger.info(`compilePacks => directoryToCheck = ${directoryToCheck}`);
+	for (const directoryToCheckTmp of macroFolders) {
+        const directoryToCheck = path.join(PACK_SOURCES,directoryToCheckTmp.name);
+		logger.info(`Cleaning pack => directoryToCheck = ${directoryToCheck}`);
 
 		let folders = [];
 		if (packName) {
@@ -204,7 +208,9 @@ function cleanPacks() {
 		}
 
 		const packsTmp = folders.map((folder) => {
-			logger.info(`Cleaning pack ${folder.name}`);
+			// logger.info(`Cleaning pack ${folder.name}`);
+            const packName = path.join(directoryToCheck,`${folder.name}`).replaceAll("/","-").replaceAll("\\","-");
+            logger.info(`Cleaning pack ${packName}`);
 			// return gulp.src(path.join(PACK_SRC, folder.name, "/**/*.json"))
 			return gulp.src(path.join(directoryToCheck, folder.name, "/**/*.json")).pipe(
 				through2.obj(async (file, enc, callback) => {
@@ -213,9 +219,11 @@ function cleanPacks() {
 					if (entryName && entryName !== name) return callback(null, file);
 					cleanPackEntry(json);
 					if (!json._id) {
-						json._id = await determineId(json, folder.name);
+                        logger.info(`Cleaning pack  => determineId = ${packName}`);
+						json._id = await determineId(json, packName);
 					}
 					fs.rmSync(file.path, { force: true });
+                    //logger.info(`Cleaning pack  => writeFileSync = ${file.path} `);
 					fs.writeFileSync(file.path, `${JSON.stringify(json, null, 2)}\n`, { mode: 0o664 });
 					callback(null, file);
 				})
@@ -244,8 +252,12 @@ function compilePacks() {
 	// const folders = fs.readdirSync(PACK_SRC, { withFileTypes: true }).filter(file =>
 	//     file.isDirectory() && ( !packName || (packName === file.name) )
 	// );
+    const macroFolders = fs.readdirSync(PACK_SOURCES, { withFileTypes: true }).filter(file =>
+	    file.isDirectory()
+	);
 	let packs = [];
-	for (const directoryToCheck of PACK_SOURCES) {
+	for (const directoryToCheckTmp of macroFolders) {
+        const directoryToCheck = path.join(PACK_SOURCES,directoryToCheckTmp.name);
 		logger.info(`compilePacks => directoryToCheck = ${directoryToCheck}`);
 
 		let folders = [];
@@ -258,11 +270,22 @@ function compilePacks() {
 		}
 
 		const packsTmp = folders.map((folder) => {
-			const filePath = path.join(PACK_DEST, `${folder.name}.db`);
+            logger.info(`compilePacks => directoryToCheck 2 = ${path.join(directoryToCheck,`${folder.name}`)}`);
+
+			const filesJson = fs.readdirSync(path.join(directoryToCheck,`${folder.name}`), { withFileTypes: true }).filter((file) => {
+				return file && !file.isDirectory() && path.extname(file.name).toLowerCase() === `.json`;
+			});
+            if(!filesJson || filesJson.length == 0){
+                return [];
+            }
+
+            const packName = path.join(directoryToCheck,`${folder.name}`).replaceAll("/","-").replaceAll("\\","-")+".db";
+            logger.info(`Set up pack name ${packName}`);
+			const filePath = path.join(PACK_DEST, packName);
 			fs.rmSync(filePath, { force: true });
 			const db = fs.createWriteStream(filePath, { flags: "a", mode: 0o664 });
 			const data = [];
-			logger.info(`Compiling pack ${folder.name}`);
+			logger.info(`Compiling pack ${packName}`);
 			return (
 				gulp
 					.src(path.join(directoryToCheck, folder.name, "/**/*.json"))
@@ -304,11 +327,16 @@ exports.compilePacks = compilePacks;
 function extractPacks() {
 	const packName = parsedArgs.pack ?? "*";
 	const entryName = parsedArgs.name?.toLowerCase();
+    logger.info(`extractPack => packName = ${packName}`);
 	const packs = gulp.src(`${PACK_DEST}/**/${packName}.db`).pipe(
 		through2.obj((file, enc, callback) => {
 			const filename = path.parse(file.path).name;
 			// const folder = path.join(PACK_SRC, filename);
-			for (const directoryToCheck of PACK_SOURCES) {
+            const macroFolders = fs.readdirSync(PACK_SOURCES, { withFileTypes: true }).filter(file =>
+                file.isDirectory()
+            );
+			for (const directoryToCheckTmp of macroFolders) {
+                const directoryToCheck = path.join(PACK_SOURCES,directoryToCheckTmp.name);
 				logger.info(`extractPacks => directoryToCheck = ${directoryToCheck}`);
 				let folders = [];
 				if (packName) {
@@ -343,6 +371,7 @@ function extractPacks() {
 								.replace(/\s+|-{2,}/g, "-");
 							const subfolder = path.join(folder, _getSubfolderName(entry, filename));
 							if (!fs.existsSync(subfolder)) fs.mkdirSync(subfolder, { recursive: true, mode: 0o775 });
+                            logger.info(`Extracting pack  => writeFileSync = ${path.join(subfolder, `${outputName}.json`)} `);
 							fs.writeFileSync(path.join(subfolder, `${outputName}.json`), output, { mode: 0o664 });
 						});
 					});
@@ -448,8 +477,12 @@ async function prepareJsons() {
 	const entryName = parsedArgs.name?.toLowerCase() ?? undefined;
 	logger.info(`prepareJsons => parsedArgs.pack = ${packName}`);
 	logger.info(`prepareJsons => entryName = ${entryName}`);
-
-	for (const directoryToCheck of PACK_SOURCES) {
+    const macroFolders = fs.readdirSync(PACK_SOURCES, { withFileTypes: true }).filter(file =>
+        file.isDirectory()
+    );
+    logger.info(`prepareJsons => macroFolders = ${macroFolders.length} => ${JSON.stringify(macroFolders[0])}`);
+	for (const directoryToCheckTmp of macroFolders) {
+        const directoryToCheck = path.join(PACK_SOURCES,directoryToCheckTmp.name);
 		logger.info(`prepareJsons => directoryToCheck = ${directoryToCheck}`);
 
 		let folders = [];
@@ -462,7 +495,7 @@ async function prepareJsons() {
 		}
 		if (folders && folders.length > 0) {
 			logger.info(`prepareJsons => folders ${JSON.stringify(folders[0])}`);
-			const folderPath = directoryToCheck + "/" + folders[0].name; // e.g. generic
+			const folderPath = path.join(directoryToCheck ,folders[0].name); // e.g. generic
 			logger.info(`prepareJsons => folderPath = ${folderPath}`);
 			const filesJs = fs.readdirSync(folderPath, { withFileTypes: true }).filter((file) => {
 				// logger.info(file.name + " => " + path.extname(file.name));
@@ -500,10 +533,12 @@ async function prepareJsons() {
 							cleanPackEntry(jsonObj);
 							// logger.info(`prepareJsons  => cleanedPackEntry(`);
 							if (!jsonObj._id) {
+                                logger.info(`prepareJsons  => determineId = ${folder.name}`);
 								jsonObj._id = await determineId(jsonObj, folder.name);
 							}
 							jsonObj.command = javascriptContent;
 							// fs.rmSync(fileJson.path, { force: true });
+                            logger.info(`prepareJsons  => writeFileSync = ${folderPath + "/" + fileJson.name} `);
 							fs.writeFileSync(
 								folderPath + "/" + fileJson.name,
 								`${JSON.stringify(jsonObj, null, 2)}\n`,
@@ -641,10 +676,8 @@ const createTransformer = () => {
 						);
 					}
 				}
-				console.log(`22`);
 				return visitEachChild(node, visitor, context);
 			}
-			console.log(`23`);
 			return visitNode(node, visitor);
 		};
 	};
